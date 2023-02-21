@@ -1,0 +1,4 @@
+".\Objects\STARTUP.obj",
+".\Objects\main.obj" 
+TO ".\Objects\心动仪程序" 
+PRINT(".\Listings\心动仪程序.m51") RAMSIZE(256) 

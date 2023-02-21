@@ -1,0 +1,946 @@
+C51 COMPILER V9.54   MAIN                                                                  10/15/2019 20:09:51 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main
+                    -.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include <reg52.h>
+   2          #define uchar unsigned char  //8位宏定义
+   3          #define uint  unsigned int   //16位宏定义
+   4          #include <intrins.h>
+   5          
+   6          sbit dq = P1^6;     //定义18b20 IO口
+   7          sbit beep = P3^7;   //定义蜂鸣器 IO口
+   8          
+   9          bit flag_300ms;
+  10          
+  11          uchar code table_num[]="0123456789abcdefg";
+  12          
+  13          sbit rs=P1^0;  //寄存器选择信号 H:数据寄存器 L:指令寄存器
+  14          sbit rw=P1^1;  //寄存器选择信号 H:数据寄存器 L:指令寄存器
+  15          sbit e =P1^2;  //片选信号 下降沿触发
+  16          
+  17          unsigned char flag_i=0,timecount=0,displayOK=0,rate=0,aa=0;
+  18          
+  19          uchar rate_l,rate_h;   //心跳报警区间
+  20          
+  21          float time[6]={0};
+  22          
+  23          uchar menu_1,menu_2;   //设置参数使用
+  24          uint temperature ;
+  25          
+  26          sbit clk = P1^3;    //ds1302时钟线定义
+  27          sbit io =  P1^4;    //数据线
+  28          sbit rst = P1^5;    //复位线
+  29                      //秒  分  时  日  月  年  星期
+  30          uchar code write_add[]={0x8a,0x8c,0x88,0x86,0x84,0x82,0x80};   //写地址
+  31          uchar code read_add[] ={0x81,0x83,0x85,0x87,0x89,0x8d,0x8b};   //读地址
+  32          uchar miao,fen,shi,ri,yue,week,nian;
+  33          uchar i;
+  34          
+  35          uchar flag_100ms ;
+  36          
+  37          //延时函数 1ms
+  38          void delay_1ms(uint q)
+  39          {
+  40   1        uint i,j;
+  41   1        for(i=0;i<q;i++)
+  42   1          for(j=0;j<110;j++);
+  43   1      }
+  44          
+  45          //小延时
+  46          void delay_uint(uint q)
+  47          {
+  48   1        while(q--);
+  49   1      }
+  50          
+  51          //1602命令函数
+  52          void write_com(uchar com)
+  53          {
+  54   1        e=0;
+C51 COMPILER V9.54   MAIN                                                                  10/15/2019 20:09:51 PAGE 2   
+
+  55   1        rs=0;
+  56   1        rw=0;
+  57   1        P0=com;
+  58   1        delay_uint(25);
+  59   1        e=1;
+  60   1        delay_uint(100);
+  61   1        e=0;
+  62   1      }
+  63          
+  64          //1602写数据函数
+  65          void write_data(uchar dat)
+  66          {
+  67   1        e=0;
+  68   1        rs=1;
+  69   1        rw=0;
+  70   1        P0=dat;
+  71   1        delay_uint(25);
+  72   1        e=1;
+  73   1        delay_uint(100);
+  74   1        e=0;  
+  75   1      }
+  76          
+  77          //改变液晶位值函数
+  78          //格式：（行，列，“值”）
+  79          void write_string(uchar hang,uchar add,uchar *p)
+  80          {
+  81   1        if(hang==1)   
+  82   1          write_com(0x80+add);
+  83   1        else
+  84   1          write_com(0x80+0x40+add);
+  85   1        while(1)
+  86   1        {
+  87   2          if(*p == '\0')  break;
+  88   2          write_data(*p);
+  89   2          p++;
+  90   2        } 
+  91   1      }
+  92          
+  93          //控制光标函数
+  94          void write_guanbiao(uchar hang,uchar add,uchar date)
+  95          {   
+  96   1        if(hang==1)   
+  97   1          write_com(0x80+add);
+  98   1        else
+  99   1          write_com(0x80+0x40+add);
+ 100   1        if(date == 1)
+ 101   1          write_com(0x0f);     //显示光标并闪烁
+ 102   1        else 
+ 103   1          write_com(0x0c);   //关闭光标
+ 104   1      } 
+ 105          
+ 106          //1602显示两位十进制数
+ 107          void write_sfm1(uchar hang,uchar add,uchar date)
+ 108          {
+ 109   1        if(hang==1)   
+ 110   1          write_com(0x80+add);
+ 111   1        else
+ 112   1          write_com(0x80+0x40+add);
+ 113   1        write_data(table_num[date%10]); 
+ 114   1      }
+ 115          
+ 116          void write_sfm2_ds1302(uchar hang,uchar add,uchar date)
+C51 COMPILER V9.54   MAIN                                                                  10/15/2019 20:09:51 PAGE 3   
+
+ 117          {
+ 118   1        if(hang==1)
+ 119   1          write_com(0x80+add);
+ 120   1        else
+ 121   1          write_com(0x80+0x40+add);   
+ 122   1        write_data(table_num[date/10]);
+ 123   1        write_data(table_num[date%10]); 
+ 124   1      }
+ 125          
+ 126          void write_sfm3_18B20(uchar hang,uchar add,uint date)
+ 127          {
+ 128   1        if(hang==1)   
+ 129   1          write_com(0x80+add);
+ 130   1        else
+ 131   1          write_com(0x80+0x40+add);
+ 132   1        write_data(0x30+date/100%10);
+ 133   1        write_data(0x30+date/10%10);
+ 134   1        write_data('.');
+ 135   1        write_data(0x30+date%10); 
+ 136   1      }
+ 137          
+ 138          void write_sfm3(uchar hang,uchar add,uint date)
+ 139          {
+ 140   1        if(hang==1)   
+ 141   1          write_com(0x80+add);
+ 142   1        else
+ 143   1          write_com(0x80+0x40+add);
+ 144   1        write_data(0x30+date/100%10);
+ 145   1        write_data(0x30+date/10%10);
+ 146   1        write_data(0x30+date%10); 
+ 147   1      }
+ 148          
+ 149          //1602初始化设置
+ 150          void init_1602()
+ 151          {
+ 152   1        write_com(0x38);
+ 153   1        write_com(0x0c);
+ 154   1        write_com(0x06);
+ 155   1        delay_uint(1000);
+ 156   1        write_string(1,0,"000/min 00:00:00"); 
+ 157   1        write_string(2,0,"  H:000  L:000  ");
+ 158   1        write_sfm3(2,4,rate_h);      //显示闹钟 时
+ 159   1        write_sfm3(2,11,rate_l);     //显示闹钟 分
+ 160   1      }
+ 161          
+ 162          //往对应地址中写入数据
+ 163          void write_ds1302(uchar add,uchar dat)
+ 164          {   
+ 165   1        rst = 1;             //复位线拉高
+ 166   1        for(i=0;i<8;i++)
+ 167   1        {                    //低位在前
+ 168   2          clk = 0;           //时钟线拉低开始写入数据
+ 169   2          io = add & 0x01;      
+ 170   2          add >>= 1;         //把地址右移一位
+ 171   2          clk = 1;           //时钟线拉高
+ 172   2        } 
+ 173   1        for(i=0;i<8;i++)
+ 174   1        {
+ 175   2          clk = 0;           //时钟线拉低开始写数据
+ 176   2          io = dat & 0x01;
+ 177   2          dat >>= 1;         //把地址右移一位
+ 178   2          clk = 1;           //时钟线拉高
+C51 COMPILER V9.54   MAIN                                                                  10/15/2019 20:09:51 PAGE 4   
+
+ 179   2        }
+ 180   1        rst = 0;             //复位线拉低
+ 181   1      }
+ 182          
+ 183          //从对应地址中读出数据
+ 184          uchar read_ds1302(uchar add)
+ 185          {
+ 186   1        uchar value,i;
+ 187   1        rst = 1;             //复位线拉高
+ 188   1        for(i=0;i<8;i++)
+ 189   1        {                    //低位在前
+ 190   2          clk = 0;           //时钟线拉低开始写入数据
+ 191   2          io = add & 0x01;      
+ 192   2          add >>= 1;         //把地址右移一位
+ 193   2          clk = 1;           //时钟线拉高
+ 194   2        }   
+ 195   1        for(i=0;i<8;i++)
+ 196   1        {
+ 197   2          clk = 0;           //时钟线拉低开始读出数据
+ 198   2          value >>= 1;
+ 199   2          if(io == 1)
+ 200   2            value |= 0x80;
+ 201   2          clk = 1;           //时钟线拉高
+ 202   2        }
+ 203   1        rst = 0;             //复位线拉低
+ 204   1        return value;        //返回读出的值
+ 205   1      }
+ 206          
+ 207          //读出时间
+ 208          void read_time()
+ 209          {
+ 210   1        miao = read_ds1302(read_add[0]);  //读秒
+ 211   1        fen  = read_ds1302(read_add[1]);  //读分
+ 212   1        shi  = read_ds1302(read_add[2]);  //读时
+ 213   1        ri   = read_ds1302(read_add[3]);  //读日
+ 214   1        yue  = read_ds1302(read_add[4]);  //读月
+ 215   1        nian = read_ds1302(read_add[5]);  //读年
+ 216   1        week = read_ds1302(read_add[6]);  //读星期
+ 217   1      }
+ 218          
+ 219          //往ds1302中写入时间
+ 220          void write_time()
+ 221          {
+ 222   1        write_ds1302(0x8e,0x00);          //打开写保护
+ 223   1        write_ds1302(write_add[0],miao);  //写秒
+ 224   1        write_ds1302(write_add[1],fen);   //写分
+ 225   1        write_ds1302(write_add[2],shi);   //写时
+ 226   1        write_ds1302(write_add[3],ri);    //写日
+ 227   1        write_ds1302(write_add[4],yue);   //写月
+ 228   1        write_ds1302(write_add[5],nian);  //写星期
+ 229   1        write_ds1302(write_add[6],week);  //写年
+ 230   1        write_ds1302(0x8e,0x80);          //关闭写保护
+ 231   1      }
+ 232          
+ 233          //18b20初始化函数
+ 234          void init_18b20()
+ 235          {
+ 236   1        bit q;
+ 237   1        dq = 1;             //拉高总线
+ 238   1        delay_uint(1);      //延时15us
+ 239   1        dq = 0;             //复位脉冲
+ 240   1        delay_uint(80);     //延时750us
+C51 COMPILER V9.54   MAIN                                                                  10/15/2019 20:09:51 PAGE 5   
+
+ 241   1        dq = 1;             //拉高总线 等待
+ 242   1        delay_uint(10);     //延时110us
+ 243   1        q = dq;             //读取18b20初始化信号
+ 244   1        delay_uint(20);     //延时200us
+ 245   1        dq = 1;             //拉高总线 释放
+ 246   1      }
+ 247          
+ 248          //写18b20的数据
+ 249          void write_18b20(uchar dat)
+ 250          {
+ 251   1        uchar i;
+ 252   1        for(i=0;i<8;i++)
+ 253   1        {
+ 254   2          dq = 0;            //拉低总线 开始写时间隙
+ 255   2          dq = dat & 0x01;   //向18b20写数据
+ 256   2          delay_uint(5);     //延时60us
+ 257   2          dq = 1;            //释放总线
+ 258   2          dat >>= 1;
+ 259   2        } 
+ 260   1      }
+ 261          
+ 262          //读取18b20的数据
+ 263          uchar read_18b20()
+ 264          {
+ 265   1        uchar i,value;
+ 266   1        for(i=0;i<8;i++)
+ 267   1        {
+ 268   2          dq = 0;            //拉低总线 开始读时间隙
+ 269   2          value >>= 1;       
+ 270   2          dq = 1;            //释放总线
+ 271   2          if(dq == 1)        //开始读写数据
+ 272   2            value |= 0x80;
+ 273   2          delay_uint(5);     //延时60us
+ 274   2        }
+ 275   1        return value;        //返回数据
+ 276   1      }
+ 277          
+ 278          //读取温度
+ 279          uint read_temp()
+ 280          {
+ 281   1        uint value;
+ 282   1        uchar low;
+ 283   1        init_18b20();        //初始化18b20
+ 284   1        write_18b20(0xcc);
+ 285   1        write_18b20(0x44);
+ 286   1        delay_uint(50); 
+ 287   1        
+ 288   1        init_18b20();        //初始化18b20
+ 289   1        EA = 0;
+ 290   1        write_18b20(0xcc);  
+ 291   1        write_18b20(0xbe);    
+ 292   1        EA = 1;
+ 293   1      
+ 294   1        low = read_18b20();    //温度低字节
+ 295   1        value = read_18b20();  //温度高字节
+ 296   1      
+ 297   1        value <<= 8;           //温度高位左移8位
+ 298   1        value |= low;          //读出温度放入value低八位中
+ 299   1        value *= 0.625;    
+ 300   1        return value;          //返回数据
+ 301   1      }
+ 302          
+C51 COMPILER V9.54   MAIN                                                                  10/15/2019 20:09:51 PAGE 6   
+
+ 303          //独立按键
+ 304          uchar key_can;
+ 305          
+ 306          void key()
+ 307          {
+ 308   1        static uchar key_new;
+ 309   1        key_can = 20;         
+ 310   1        P3 |= 0x78;           
+ 311   1        if((P3 & 0x78) != 0x78) //按键按下
+ 312   1        {
+ 313   2          delay_1ms(1);         //延时消抖
+ 314   2          if(((P3 & 0x78) != 0x78) && (key_new == 1))
+ 315   2          {     
+ 316   3            key_new = 0;
+ 317   3            switch(P3 & 0x78)
+ 318   3            {
+ 319   4              case 0x70:  key_can = 4;  break;
+ 320   4              case 0x68:  key_can = 3;  break;
+ 321   4              case 0x58:  key_can = 2;  break;
+ 322   4              case 0x38:  key_can = 1;  break;
+ 323   4            }
+ 324   3          }     
+ 325   2        }
+ 326   1        else 
+ 327   1          key_new = 1;  
+ 328   1      }
+ 329          
+ 330          //按键函数
+ 331          void key_with()
+ 332          {
+ 333   1        if(key_can == 1)
+ 334   1        {
+ 335   2          menu_1++;
+ 336   2          if(menu_1 == 1) //设置按键
+ 337   2          {
+ 338   3            menu_2 = 1;
+ 339   3            write_string(1,0,"    -  -    W:  ");     
+ 340   3            write_string(2,0," 20  -  -       "); 
+ 341   3          }
+ 342   2          if(menu_1 == 2)
+ 343   2          {
+ 344   3            menu_2 = 1;
+ 345   3            write_string(1,0,"   set alarm    ");     
+ 346   3            write_string(2,0,"  H:000  L:000  ");
+ 347   3          }
+ 348   2          if(menu_1 > 2)
+ 349   2          {
+ 350   3            menu_1 = 0;
+ 351   3            write_guanbiao(1,2,0);
+ 352   3            init_1602();
+ 353   3          }
+ 354   2        }
+ 355   1        if(key_can == 2) //选择按键
+ 356   1        {
+ 357   2          if(menu_1 == 1)
+ 358   2          {
+ 359   3            menu_2 ++;
+ 360   3            if(menu_2 > 7)
+ 361   3              menu_2 = 1;
+ 362   3          }
+ 363   2          if(menu_1 == 2)
+ 364   2          {
+C51 COMPILER V9.54   MAIN                                                                  10/15/2019 20:09:51 PAGE 7   
+
+ 365   3            menu_2 ++;
+ 366   3            if(menu_2 > 2)
+ 367   3              menu_2 = 1;       
+ 368   3          }
+ 369   2        }
+ 370   1        if(menu_1 == 1)
+ 371   1        {
+ 372   2          if(menu_2 == 1)  //设置时
+ 373   2          {
+ 374   3            if(key_can == 3)  //加
+ 375   3            {
+ 376   4              shi+=0x01;
+ 377   4              if((shi & 0x0f) >= 0x0a)
+ 378   4                shi = (shi & 0xf0) + 0x10;
+ 379   4              if(shi >= 0x24)
+ 380   4                shi = 0;
+ 381   4            }   
+ 382   3            if(key_can == 4)  //减
+ 383   3            {
+ 384   4              if(shi == 0x00)
+ 385   4                shi = 0x24;
+ 386   4              if((shi & 0x0f) == 0x00)
+ 387   4                shi = (shi | 0x0a) - 0x10;
+ 388   4              shi -- ; 
+ 389   4            }           
+ 390   3          }
+ 391   2          if(menu_2 == 2)  //设置分
+ 392   2          {
+ 393   3            if(key_can == 3)  //加
+ 394   3            {
+ 395   4              fen+=0x01;
+ 396   4              if((fen & 0x0f) >= 0x0a)
+ 397   4                fen = (fen & 0xf0) + 0x10;
+ 398   4              if(fen >= 0x60)
+ 399   4                fen = 0;
+ 400   4            }   
+ 401   3            if(key_can == 4)  //减
+ 402   3            {
+ 403   4              if(fen == 0x00)
+ 404   4                fen = 0x5a;
+ 405   4              if((fen & 0x0f) == 0x00)
+ 406   4                fen = (fen | 0x0a) - 0x10;
+ 407   4              fen -- ;
+ 408   4            } 
+ 409   3          }
+ 410   2          if(menu_2 == 3)  //设置秒
+ 411   2          {
+ 412   3            if(key_can == 3)  //加
+ 413   3            {
+ 414   4              miao+=0x01;
+ 415   4              if((miao & 0x0f) >= 0x0a)
+ 416   4                miao = (miao & 0xf0) + 0x10;
+ 417   4              if(miao >= 0x60)
+ 418   4                miao = 0;
+ 419   4            } 
+ 420   3            if(key_can == 4)  //减
+ 421   3            {
+ 422   4              if(miao == 0x00)
+ 423   4                miao = 0x5a;
+ 424   4              if((miao & 0x0f) == 0x00)
+ 425   4                miao = (miao | 0x0a) - 0x10;
+ 426   4              miao -- ;     
+C51 COMPILER V9.54   MAIN                                                                  10/15/2019 20:09:51 PAGE 8   
+
+ 427   4            }
+ 428   3          }
+ 429   2          if(menu_2 == 4)  //设置星期
+ 430   2          {
+ 431   3            if(key_can == 3)  //加
+ 432   3            {
+ 433   4                week+=0x01;
+ 434   4              if((week & 0x0f) >= 0x0a)
+ 435   4                week = (week & 0xf0) + 0x10;
+ 436   4              if(week >= 0x08)
+ 437   4                week = 1;
+ 438   4            }   
+ 439   3            if(key_can == 4)  //减
+ 440   3            {
+ 441   4              if(week == 0x01)
+ 442   4                week = 0x08;
+ 443   4              if((week & 0x0f) == 0x00)
+ 444   4                week = (week | 0x0a) - 0x10;
+ 445   4              week -- ;
+ 446   4            } 
+ 447   3          }
+ 448   2          if(menu_2 == 5)  //设置年
+ 449   2          {
+ 450   3            if(key_can == 3)  //加
+ 451   3            {
+ 452   4                nian+=0x01;
+ 453   4              if((nian & 0x0f) >= 0x0a)
+ 454   4                nian = (nian & 0xf0) + 0x10;
+ 455   4              if(nian >= 0x9a)
+ 456   4                nian = 1;
+ 457   4            }   
+ 458   3            if(key_can == 4)  //减
+ 459   3            {
+ 460   4              if(nian == 0x01)
+ 461   4                nian = 0x9a;
+ 462   4              if((nian & 0x0f) == 0x00)
+ 463   4                nian = (nian | 0x0a) - 0x10;
+ 464   4              nian -- ;   
+ 465   4            } 
+ 466   3          }
+ 467   2          if(menu_2 == 6)  //设置月
+ 468   2          {
+ 469   3            if(key_can == 3)  //加
+ 470   3            {
+ 471   4                yue+=0x01;
+ 472   4              if((yue & 0x0f) >= 0x0a)
+ 473   4                yue = (yue & 0xf0) + 0x10;
+ 474   4              if(yue >= 0x13)
+ 475   4                yue = 1;
+ 476   4            }   
+ 477   3            if(key_can == 4)  //减
+ 478   3            {
+ 479   4              if(yue == 0x01)
+ 480   4                yue = 0x13;
+ 481   4              if((yue & 0x0f) == 0x00)
+ 482   4                yue = (yue | 0x0a) - 0x10;
+ 483   4              yue -- ;          
+ 484   4            } 
+ 485   3          }
+ 486   2          if(menu_2 == 7)  //设置日
+ 487   2          {
+ 488   3            if(key_can == 3)  //加
+C51 COMPILER V9.54   MAIN                                                                  10/15/2019 20:09:51 PAGE 9   
+
+ 489   3            {
+ 490   4              ri+=0x01;
+ 491   4            if((ri & 0x0f) >= 0x0a)
+ 492   4              ri = (ri & 0xf0) + 0x10;
+ 493   4            if(ri >= 0x32)
+ 494   4              ri = 0;     
+ 495   4            }   
+ 496   3            if(key_can == 4)  //减
+ 497   3            {
+ 498   4              if(ri == 0x01)
+ 499   4                ri = 0x32;
+ 500   4              if((ri & 0x0f) == 0x00)
+ 501   4                ri = (ri | 0x0a) - 0x10;
+ 502   4              ri -- ;     
+ 503   4            } 
+ 504   3          }
+ 505   2          //依次显示
+ 506   2          write_sfm2_ds1302(1,2,shi);
+ 507   2          write_sfm2_ds1302(1,5,fen);  
+ 508   2          write_sfm2_ds1302(1,8,miao);
+ 509   2          write_sfm1(1,14,week);            
+ 510   2          write_sfm2_ds1302(2,3,nian);
+ 511   2          write_sfm2_ds1302(2,6,yue); 
+ 512   2          write_sfm2_ds1302(2,9,ri);  
+ 513   2          switch(menu_2)  //光标
+ 514   2          {
+ 515   3            case 1:  write_guanbiao(1,2,1);  break;
+ 516   3            case 2:  write_guanbiao(1,5,1);  break;
+ 517   3            case 3:  write_guanbiao(1,8,1);  break;
+ 518   3            case 4:  write_guanbiao(1,14,1);  break;
+ 519   3            case 5:  write_guanbiao(2,3,1);  break;
+ 520   3            case 6:  write_guanbiao(2,6,1);  break;
+ 521   3            case 7:  write_guanbiao(2,9,1);  break;
+ 522   3          }
+ 523   2          write_time();    //写入时间
+ 524   2        } 
+ 525   1      
+ 526   1      //设置上下限
+ 527   1        if(menu_1 == 2)
+ 528   1        {
+ 529   2          if(menu_2 == 1)  //设置上限报警
+ 530   2          {
+ 531   3            if(key_can == 3)  //加
+ 532   3            {
+ 533   4                rate_h ++;
+ 534   4              if(rate_h >= 255)
+ 535   4                rate_h = 0;
+ 536   4            }   
+ 537   3            if(key_can == 4)  //减
+ 538   3            {
+ 539   4              rate_h -- ;
+ 540   4              if(rate_h <= rate_l)
+ 541   4                rate_h = rate_l + 1;
+ 542   4            } 
+ 543   3          }
+ 544   2          if(menu_2 == 2)  //设置下限报警
+ 545   2          {
+ 546   3            if(key_can == 3)  //加
+ 547   3            {
+ 548   4                rate_l ++;
+ 549   4              if(rate_l >= rate_h)
+ 550   4                rate_l = rate_h - 1;
+C51 COMPILER V9.54   MAIN                                                                  10/15/2019 20:09:51 PAGE 10  
+
+ 551   4            } 
+ 552   3            if(key_can == 4)  //减
+ 553   3            {
+ 554   4              if(rate_l == 0x00)
+ 555   4                rate_l = 1;
+ 556   4              rate_l -- ;     
+ 557   4            }
+ 558   3          }
+ 559   2          write_sfm3(2,4,rate_h);
+ 560   2          write_sfm3(2,11,rate_l);
+ 561   2          switch(menu_2)
+ 562   2          {
+ 563   3            case 1:  write_guanbiao(2,4,1);  break;
+ 564   3            case 2:  write_guanbiao(2,11,1);  break;
+ 565   3          } 
+ 566   2        } 
+ 567   1      }
+ 568          
+ 569          //定时器0初始化
+ 570          void time_init()    
+ 571          {
+ 572   1        EA   = 1;
+ 573   1        TMOD = 0X01;
+ 574   1        ET0  = 1;   
+ 575   1        TR0  = 1; 
+ 576   1      }
+ 577          
+ 578          //外部中断0初始化程序
+ 579          void init_int0()
+ 580          {
+ 581   1        EX0=1;
+ 582   1        EA=1; 
+ 583   1        IT0 = 1; 
+ 584   1      }
+ 585          
+ 586          //报警函数
+ 587          void clock_h_l()
+ 588          {
+ 589   1        if((rate <= rate_l) || (rate >= rate_h))
+ 590   1        {
+ 591   2          beep = ~beep;
+ 592   2        }
+ 593   1        else
+ 594   1        {
+ 595   2          beep = 1; 
+ 596   2        }     
+ 597   1      }
+ 598          
+ 599          //主函数
+ 600          void main()
+ 601          { 
+ 602   1        static uint value;
+ 603   1        time_init();  //定时器初始化
+ 604   1        init_int0();  //外部中断0初始化
+ 605   1        init_1602();  //1602初始化
+ 606   1        while(1)
+ 607   1        { 
+ 608   2          key();  //按键程序
+ 609   2          if(key_can < 10)
+ 610   2          {
+ 611   3            key_with(); 
+ 612   3          } 
+C51 COMPILER V9.54   MAIN                                                                  10/15/2019 20:09:51 PAGE 11  
+
+ 613   2          value ++;
+ 614   2          if(value >= 300)
+ 615   2          {
+ 616   3            value = 0;
+ 617   3            if(menu_1 == 0)
+ 618   3            {
+ 619   4              if(displayOK==0)
+ 620   4              {
+ 621   5                rate = 0;
+ 622   5              }
+ 623   4              else
+ 624   4              {
+ 625   5                rate=60000/(time[1]/5+time[2]/5+time[3]/5+time[4]/5+time[5]/5);
+ 626   5              }
+ 627   4              write_sfm2_ds1302(1,8,shi);
+ 628   4              write_sfm2_ds1302(1,11,fen);
+ 629   4              write_sfm2_ds1302(1,14,miao); 
+ 630   4              temperature = read_temp();
+ 631   4              write_sfm3_18B20(1,10,temperature);
+ 632   4              read_time();
+ 633   4              write_sfm3(1,0,rate);
+ 634   4              if(rate != 0)
+ 635   4                clock_h_l();
+ 636   4              else 
+ 637   4                beep = 1;
+ 638   4            }
+ 639   3          }
+ 640   2          delay_1ms(1);
+ 641   2        }
+ 642   1      }
+ 643          
+ 644          
+ 645          void int0() interrupt 0
+ 646          {
+ 647   1        if(timecount<8)
+ 648   1        {
+ 649   2            TR0=1;
+ 650   2        }
+ 651   1        else
+ 652   1        {
+ 653   2          time[i]=timecount*50+TH0+TL0;
+ 654   2          timecount=0;
+ 655   2          i++;
+ 656   2          if(i==6)
+ 657   2          {
+ 658   3            i=1;
+ 659   3            displayOK=1; 
+ 660   3          }               
+ 661   2        }
+ 662   1      }
+ 663          
+ 664          //定时器0中断程序
+ 665          void time0_int() interrupt 1
+ 666          { 
+ 667   1        TH0 = 0x3c;
+ 668   1        TL0 = 0xb0; 
+ 669   1        timecount++;
+ 670   1        if(timecount>25)
+ 671   1        {
+ 672   2            i=0;
+ 673   2            timecount=0;
+ 674   2            displayOK=0;
+C51 COMPILER V9.54   MAIN                                                                  10/15/2019 20:09:51 PAGE 12  
+
+ 675   2            TR0=0;
+ 676   2        }
+ 677   1        if(menu_1 > 2)
+ 678   1        {
+ 679   2            menu_1 = 0;
+ 680   2            write_guanbiao(1,2,0);
+ 681   2            init_1602();    
+ 682   2        }
+ 683   1        if(key_can == 2)
+ 684   1        {
+ 685   2          if(menu_1 == 1)   
+ 686   2          {
+ 687   3            menu_2 ++;
+ 688   3            if(menu_2 > 7)
+ 689   3              menu_2 = 1;
+ 690   3          }
+ 691   2          if(menu_1 == 2)   
+ 692   2          {
+ 693   3            menu_2 ++;
+ 694   3            if(menu_2 > 2)
+ 695   3              menu_2 = 1;       
+ 696   3          }
+ 697   2        }
+ 698   1        if(menu_1 == 1)
+ 699   1        {
+ 700   2          if(menu_2 == 1) 
+ 701   2          {
+ 702   3            if(key_can == 3)
+ 703   3            {
+ 704   4              shi+=0x01;
+ 705   4              if((shi & 0x0f) >= 0x0a)
+ 706   4                shi = (shi & 0xf0) + 0x10;
+ 707   4              if(shi >= 0x24)
+ 708   4                shi = 0;
+ 709   4            }   
+ 710   3            if(key_can == 4)
+ 711   3            {
+ 712   4              if(shi == 0x00)
+ 713   4                shi = 0x24;
+ 714   4              if((shi & 0x0f) == 0x00)
+ 715   4                shi = (shi | 0x0a) - 0x10;
+ 716   4              shi -- ; 
+ 717   4            }           
+ 718   3          }
+ 719   2          if(menu_2 == 2)   
+ 720   2          {
+ 721   3            if(key_can == 3)  
+ 722   3            {
+ 723   4              fen+=0x01;
+ 724   4              if((fen & 0x0f) >= 0x0a)
+ 725   4                fen = (fen & 0xf0) + 0x10;
+ 726   4              if(fen >= 0x60)
+ 727   4                fen = 0;
+ 728   4            }   
+ 729   3            if(key_can == 4)
+ 730   3            {
+ 731   4              if(fen == 0x00)
+ 732   4                fen = 0x5a;
+ 733   4              if((fen & 0x0f) == 0x00)
+ 734   4                fen = (fen | 0x0a) - 0x10;
+ 735   4              fen -- ;
+ 736   4            } 
+C51 COMPILER V9.54   MAIN                                                                  10/15/2019 20:09:51 PAGE 13  
+
+ 737   3          }
+ 738   2          if(menu_2 == 3)   
+ 739   2          {
+ 740   3            if(key_can == 3)  
+ 741   3            {
+ 742   4              miao+=0x01;
+ 743   4              if((miao & 0x0f) >= 0x0a)
+ 744   4                miao = (miao & 0xf0) + 0x10;
+ 745   4              if(miao >= 0x60)
+ 746   4                miao = 0;
+ 747   4            } 
+ 748   3            if(key_can == 4)    
+ 749   3            {
+ 750   4              if(miao == 0x00)
+ 751   4                miao = 0x5a;
+ 752   4              if((miao & 0x0f) == 0x00)
+ 753   4                miao = (miao | 0x0a) - 0x10;
+ 754   4              miao -- ;     
+ 755   4            }
+ 756   3          }
+ 757   2          if(menu_2 == 4) 
+ 758   2          {
+ 759   3            if(key_can == 3)
+ 760   3            {
+ 761   4                week+=0x01;
+ 762   4              if((week & 0x0f) >= 0x0a)
+ 763   4                week = (week & 0xf0) + 0x10;
+ 764   4              if(week >= 0x08)
+ 765   4                week = 1;
+ 766   4            }   
+ 767   3            if(key_can == 4)
+ 768   3            {
+ 769   4              if(week == 0x01)
+ 770   4                week = 0x08;
+ 771   4              if((week & 0x0f) == 0x00)
+ 772   4                week = (week | 0x0a) - 0x10;
+ 773   4              week -- ;
+ 774   4            } 
+ 775   3          }
+ 776   2          if(menu_2 == 5) 
+ 777   2          {
+ 778   3            if(key_can == 3)
+ 779   3            {
+ 780   4                nian+=0x01;
+ 781   4              if((nian & 0x0f) >= 0x0a)
+ 782   4                nian = (nian & 0xf0) + 0x10;
+ 783   4              if(nian >= 0x9a)
+ 784   4                nian = 1;
+ 785   4            }   
+ 786   3            if(key_can == 4)
+ 787   3            {
+ 788   4              if(nian == 0x01)
+ 789   4                nian = 0x9a;
+ 790   4              if((nian & 0x0f) == 0x00)
+ 791   4                nian = (nian | 0x0a) - 0x10;
+ 792   4              nian -- ;   
+ 793   4            } 
+ 794   3          }
+ 795   2          if(menu_2 == 6)
+ 796   2          {
+ 797   3            if(key_can == 3)
+ 798   3            {
+C51 COMPILER V9.54   MAIN                                                                  10/15/2019 20:09:51 PAGE 14  
+
+ 799   4                yue+=0x01;
+ 800   4              if((yue & 0x0f) >= 0x0a)
+ 801   4                yue = (yue & 0xf0) + 0x10;
+ 802   4              if(yue >= 0x13)
+ 803   4                yue = 1;
+ 804   4            }   
+ 805   3            if(key_can == 4)
+ 806   3            {
+ 807   4              if(yue == 0x01)
+ 808   4                yue = 0x13;
+ 809   4              if((yue & 0x0f) == 0x00)
+ 810   4                yue = (yue | 0x0a) - 0x10;
+ 811   4              yue -- ;          
+ 812   4            } 
+ 813   3          }
+ 814   2          if(menu_2 == 7) 
+ 815   2          {
+ 816   3            if(key_can == 3)
+ 817   3            {
+ 818   4              ri+=0x01;
+ 819   4            if((ri & 0x0f) >= 0x0a)
+ 820   4              ri = (ri & 0xf0) + 0x10;
+ 821   4            if(ri >= 0x32)
+ 822   4              ri = 0;     
+ 823   4            }   
+ 824   3            if(key_can == 4)
+ 825   3            {
+ 826   4              if(ri == 0x01)
+ 827   4                ri = 0x32;
+ 828   4              if((ri & 0x0f) == 0x00)
+ 829   4                ri = (ri | 0x0a) - 0x10;
+ 830   4              ri -- ;     
+ 831   4            } 
+ 832   3          }
+ 833   2          write_sfm2_ds1302(1,2,shi); 
+ 834   2          write_sfm2_ds1302(1,5,fen);  
+ 835   2          write_sfm2_ds1302(1,8,miao);  
+ 836   2          write_sfm1(1,14,week);
+ 837   2          write_sfm2_ds1302(2,3,nian);  
+ 838   2          write_sfm2_ds1302(2,6,yue);
+ 839   2          write_sfm2_ds1302(2,9,ri);
+ 840   2          switch(menu_2)  //光标显示
+ 841   2          {
+ 842   3            case 1:  write_guanbiao(1,2,1);  break;
+ 843   3            case 2:  write_guanbiao(1,5,1);  break;
+ 844   3            case 3:  write_guanbiao(1,8,1);  break;
+ 845   3            case 4:  write_guanbiao(1,14,1);  break;
+ 846   3            case 5:  write_guanbiao(2,3,1);  break;
+ 847   3            case 6:  write_guanbiao(2,6,1);  break;
+ 848   3            case 7:  write_guanbiao(2,9,1);  break;
+ 849   3          }
+ 850   2          write_time();  //写入时间
+ 851   2        } 
+ 852   1      
+ 853   1      //设置
+ 854   1        if(menu_1 == 2)
+ 855   1        {
+ 856   2          if(menu_2 == 1)
+ 857   2          {
+ 858   3            if(key_can == 3)
+ 859   3            {
+ 860   4                rate_h ++;
+C51 COMPILER V9.54   MAIN                                                                  10/15/2019 20:09:51 PAGE 15  
+
+ 861   4              if(rate_h >= 255)
+ 862   4                rate_h = 0;
+ 863   4            }   
+ 864   3            if(key_can == 4)
+ 865   3            {
+ 866   4              rate_h -- ;
+ 867   4              if(rate_h <= rate_l)
+ 868   4                rate_h = rate_l + 1;
+ 869   4            } 
+ 870   3          }
+ 871   2          if(menu_2 == 2)
+ 872   2          {
+ 873   3            if(key_can == 3)
+ 874   3            {
+ 875   4                rate_l ++;
+ 876   4              if(rate_l >= rate_h)
+ 877   4                rate_l = rate_h - 1;
+ 878   4            } 
+ 879   3            if(key_can == 4)
+ 880   3            {
+ 881   4              if(rate_l == 0x00)
+ 882   4                rate_l = 1;
+ 883   4              rate_l -- ;     
+ 884   4            }
+ 885   3          }
+ 886   2          write_sfm3(2,4,rate_h); 
+ 887   2          write_sfm3(2,11,rate_l);  
+ 888   2          switch(menu_2)  
+ 889   2          {
+ 890   3            case 1:  write_guanbiao(2,4,1);  break;
+ 891   3            case 2:  write_guanbiao(2,11,1);  break;
+ 892   3          } 
+ 893   2        } 
+ 894   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   3081    ----
+   CONSTANT SIZE    =    117    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     48    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1       1
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

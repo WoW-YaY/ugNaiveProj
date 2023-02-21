@@ -1,0 +1,3581 @@
+---
+title: 'Reproduce state-space using Python'
+author: "Jiahui Ye"
+date: "July 6, 2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+
+
+### Vectors, Matrix and other stuff
+
+
+```{r}
+v<-c(2,6,1,3,11)
+v
+myrow<-t(v)
+myrow
+```
+
+```{python}
+import numpy as np
+v=np.matrix([2,6,1,3,11])
+print(v)
+myrow=np.transpose((v))
+print(myrow)
+```
+
+
+```{r}
+seq(from=-4, to=5,by=1.5)
+seq(from=-4, to=5)
+seq(4, 5, length.out = 5)
+```
+
+```{python}
+import numpy
+np.arange(-4,5,1.5)
+np.arange(-4,5)
+np.linspace(4,5,num=5)
+```
+
+
+```{r}
+rep(2,5)
+rep(3,4)
+```
+
+```{python}
+[2]*5
+[3]*4
+```
+
+
+```{r}
+matrix(4,3,3)
+matrix(c(11,5,9,2),2,2)
+matrix(c(1,2,3,4),4,1)
+matrix(c(1,2,3,4),1,4)
+```
+
+```{python}
+import numpy as np
+np.ones((3,3))*4
+np.reshape(np.array([11,5,9,2]),(2,2)).T
+np.reshape(np.array([1,2,3,4]),(4,1))
+np.reshape(np.array([1,2,3,4]),(1,4))
+```
+
+
+```{r}
+v1<-c(21,5,2,15)
+v2<-c(-3,-6,1,-7)
+v3<-c(102,10,-13,4)
+x<-matrix(cbind(v1,v2,v3),4,3)
+x
+x[2]
+x[4:7]
+x[c(2,9,4)]
+x[x>0&x<12]           
+x[[11]]
+x[3,2]
+x[2,]
+x[3:4,1:2]
+v3[-c(1,2,4)]
+```
+
+```{python}
+import numpy as np
+v1 = np.array([[21,5,2,15]])
+v2 = np.array([[-3,-6,1,-7]])
+v3 = np.array([[102,10,-13,4]])
+x = np.concatenate((v1,v2,v3)).T.reshape(4,3)
+x
+x.T.flatten()[1]
+x.T.flatten()[3:7]
+x.T.flatten()[[1,8,3]]
+y = x[np.where(x>0)]
+y[np.where(y<12)]
+x.T.flatten()[[10]]
+x[2,1]
+x[1]
+x[2:4,0:2]
+np.delete(v3,[0,1,3])
+```
+
+
+```{r}
+whichsex<-c("Female","Male","Male","Female","Male")
+sex<-factor(whichsex,levels = c("Female","Male"))
+sex
+```
+
+```{python}
+import pandas as pd
+pd.Series(pd.Categorical(["Female","Male","Male","Female","Male"], categories=["Female","Male"]))
+```
+
+
+```{r}
+myvector<-c(4,22,56,77,26,88,100)
+myvector
+myvector[-4]
+myvector[-c(1,3)]
+set.seed(124)
+M<-matrix(rnorm(16),4,4)
+M
+M[-c(2,4),]
+M[-c(1,4),-c(1,2)]
+```
+
+```{python}
+import numpy as np
+myvector=np.array([4,22,56,77,26,88,100])
+myvector
+np.delete(myvector,3)
+np.delete(myvector,[0,2])
+np.random.seed(124)
+M=np.reshape(np.random.randn(16),(4,4))
+M
+np.delete(M,[1,3],axis=0)
+np.delete(np.delete(M,[0,3],axis=0),[0,1],axis=1)
+```
+
+
+```{r}
+array(1:3, c(2,4)) # This is like create a matrix
+array(1:8,c(2,2,3)) # This is a object containing three matrices
+```
+
+```{python}
+import numpy as np
+np.reshape(np.random.randint(1,4,8),(2,4))
+np.reshape(np.random.randint(1,8,12),(2,2,3))
+```
+
+
+```{r}
+v1<-c(3,2,6)
+v2<-c(-2,-1,5)
+v1+v2
+v1-v2
+v1*v2
+v1/v2
+```
+
+```{python}
+import numpy as np
+v1=np.array([3,2,6])
+v2=np.array([-2,-1,5])
+v1+v2
+v1-v2
+v1*v2
+v1/v2
+```
+
+
+```{r}
+# vector is defaulted to be column vector in R
+v1<-c(3,2,6)
+v2<-c(-2,-1)
+v1%*%t(v2)
+```
+
+```{python}
+import numpy as np
+v1=np.array([[3,2,6]])
+v2=np.array([[-2,-1]])
+np.dot(v1.T,v2)
+```
+
+
+```{r}
+m1<-matrix(rnorm(6),2,3)
+m2<-matrix(rnorm(9),3,3)
+m1%*%m2
+```
+
+```{python}
+import numpy as np
+m1=np.reshape(np.random.randn(6),(2,3))
+m2=np.reshape(np.random.randn(9),(3,3))
+np.dot(m1,m2)
+```
+
+
+```{r}
+set.seed(123)
+m1<-matrix(rnorm(6),1,2)
+m2<-matrix(rnorm(4),2,2)
+m1%*%solve(m2)
+```
+
+```{python}
+import numpy as np
+np.random.seed(123)
+m1=np.reshape(np.random.randn(2),(1,2))
+m2=np.reshape(np.random.randn(4),(2,2))
+np.dot(m1,np.matrix(m2).I)
+```
+
+
+```{r}
+a<-3
+b<-c(2,6)
+c<-matrix(rnorm(4),2,2)
+d<-rep(4,3)
+mylist<-list(a,b,c,d)
+mylist
+```
+
+```{python}
+import numpy as np
+a=3
+b=[2,6]
+c=np.reshape(np.random.randn(4),(2,2))
+d=[4]*3
+mylist=[a,b,c,d]
+mylist
+```
+
+
+```{r}
+mylist[-c(2,4)]
+#you can also eleminate an element using this:
+print("This is another example")
+mylist[[4]]<-NULL
+mylist
+```
+
+```{python}
+mylist=[a,b,c,d]
+del mylist[1]
+del mylist[2]
+mylist
+print("This is another example")
+mylist=[a,b,c,d]
+mylist[3]=[]
+mylist
+```
+
+
+
+### Writing your own function
+
+
+```{r}
+mymean= function(x){print("Below you find the mean of the variable x"); return(sum(x)/length(x))}
+x<-c(41,2,14,24,4,22,134)
+mymean(x)
+crossmean= function(x,y){print("Below you find the mean of the variable x times y"); 
+  return(sum(x*y)/length(x))}
+y<-c(-1,32,12,-5,21,-2,0)
+crossmean(x,y)
+```
+
+```{python}
+import numpy as np
+def mymean(x):
+  print("Below you find the mean of the variable x")
+  return(sum(x)/len(x))
+x=np.array([41,2,14,24,4,22,134])
+mymean(x)
+
+def crossmean(x,y):
+  print("Below you find the mean of the variable x times y")
+  return(sum(x*y)/len(x))
+y=np.array([-1,32,12,-5,21,-2,0])
+crossmean(x,y)
+```
+
+
+```{r}
+variance1<-function(x){mean((x-mean(x))^2)}
+variance2<-function(x){sum((x-mean(x))^2)/(length(x)-1)}  # var(x)
+covariance1<-function(x,y){mean((x-mean(x))*(y-mean(y)))}
+covariance2<-function(x,y){sum((x-mean(x))*(y-mean(y)))/(length(x)-1)}  # cov(x)
+correlation<-function(x,y){covariance1(x,y)/sqrt(variance1(x)*variance1(y))}
+```
+
+```{python}
+import numpy as np
+def variance1(x):
+  return np.mean((x-np.mean(x))**2)
+def variance2(x):
+  return sum((x-np.mean(x))**2)/(len(x)-1)
+def covariance1(x,y):
+  return np.mean((x-np.mean(x))*(y-np.mean(y)))
+def covariance2(x,y):
+  return sum((x-np.mean(x))*(y-np.mean(y)))/(len(x)-1)
+def correlation(x,y):
+  return covariance1(x,y)/np.sqrt(variance1(x)*variance1(y))
+x=np.array([41,2,14,24,4,22,134])
+y=np.array([-1,32,12,-5,21,-2,0])
+variance1(x)
+variance2(x)
+covariance1(x,y)
+covariance2(x,y)
+correlation(x,y)
+```
+
+
+
+### The for loop and the if condition in R studio
+
+
+```{r}
+for(i in 1:4){print(i)}
+for(i in c(-3,0,5,11)){print(rep(i,2))}
+```
+
+```{python}
+for i in range(1,5):
+  print(i)
+for i in [-3,0,5,11]:
+  print([i]*2)
+```
+
+
+```{r}
+mat=matrix(0,4,4); for(i in 1:4){for(j in 1:4){mat[i,j]=i*j}};mat
+```
+
+```{python}
+import numpy as np
+mat=np.zeros((4,4))
+for i in range(4):
+  for j in range(4):
+    mat[i,j]=(i+1)*(j+1)
+mat
+
+```
+
+
+```{r}
+# Random walk: an important stochastic process
+set.seed(130);e<-rnorm(100);y<-c();y[1]<-e[1];for(t in 2:length(e)){y[t]<-y[t-1]+e[t]}
+plot(y,type='l',main='The process we created');
+```
+
+```{python}
+import numpy as np
+import matplotlib.pyplot as plt
+np.random.seed(130)
+e=np.random.randn(100)
+y=np.zeros(100)
+y[1]=e[1]
+for t in range(1,len(e)):
+  y[t]=y[t-1]+e[t]
+plt.plot(y)
+plt.title("The process we created") 
+```
+
+
+```{r}
+x=runif(1,3,8); 
+if(x<=6) {print("x is < or equal than 6!")} else{print("x is > than 6!")}
+x
+```
+
+```{python}
+import numpy as np
+x=np.random.uniform(3,8,1)
+if(x<=6):
+  print("x is < or equal than 6!")
+else:
+  print("x is > than 6!")
+x
+```
+
+
+```{r}
+x<-round(runif(1,0,3),0)
+x
+if(x==0){
+  print("zero")
+} else if(x==1){
+  print("one")
+} else if(x==2){
+  print("two")
+} else {print("none")}
+```
+
+```{python}
+import numpy as np
+x=np.round(np.random.uniform(0,3,1))
+x
+if(x==0):
+  print("zero")
+elif (x==1):
+  print("one")
+elif (x==2):
+  print("two")
+else:
+  print("none")
+```
+
+
+```{r}
+x<-round(runif(1,0,3),0)
+if(x==0){
+  print("zero")
+}; if(x==1){
+  print("one")
+}; if(x==2){
+  print("two")
+};if(x==3){
+  print("none")
+}
+```
+
+```{python}
+import numpy as np
+x=np.round(np.random.uniform(0,3,1))
+if(x==0):
+  print("zero")
+if(x==1):
+  print("one")
+if(x==2):
+  print("two")
+if(x==3):
+  print("none")
+```
+
+
+```{r}
+y=c(round(runif(20,-10,10)));z=c();for(i in 1:20){
+  if(y[i]<=0){z[i]<- -1}else if(y[i]>0){z[i]<- 1}}
+#Lets check if it worked...
+t(cbind(y,z))
+```
+
+```{python}
+import numpy as np
+y=np.random.uniform(-10,10,20)
+z=np.zeros(len(y))
+for i in range(20):
+  if(y[i]<=0):
+    z[i]=-1
+  else:
+    z[i]=1
+y = y[np.newaxis,:]
+z = z[np.newaxis,:]
+np.concatenate((y,z),axis=0)
+```
+
+
+```{r}
+set.seed(33); x<-c();x[1]<-45;for(i in 2:1000)x[i]<-x[i-1]+rnorm(1);plot(x,type='l')
+y<-c();for(t in 2:length(x)){if(x[t]<x[t-1]){y[t]<-0}else if(x[t]>x[t-1]){y[t]<-1}}
+mean(na.omit(y))  # this command avoid considering NA in the mean
+dailyreturn<-c();for(t in 2:length(x)){dailyreturn[t]<-log(x[t])-log(x[t-1])};dailyreturn<-dailyreturn[-1];plot(dailyreturn,type='l')
+```
+
+```{python}
+import numpy as np
+import matplotlib.pyplot as plt
+#np.random.seed(33)
+x=np.zeros(1000)
+x[0]=45
+for i in range(1,1000):
+  x[i]=x[i-1]+np.random.randn(1)
+plt.subplot(2, 1, 1)
+plt.plot(x)
+y=np.zeros(1000)
+for t in range(1,len(x)):
+  if(x[t]<x[t-1]):
+    y[t]=0
+  elif(x[t]>x[t-1]):
+    y[t]=1
+np.mean(y)
+dailyreturn=np.zeros(1000)
+for t in range(1,len(x)):
+  dailyreturn[t]=np.log(x[t])-np.log(x[t-1])
+plt.subplot(2, 1, 2)
+plt.plot(dailyreturn)
+```
+
+
+
+### Data visualization
+
+
+```{r,fig.height = 3, fig.width = 5}
+y<-c(3,4,1,5,2,10) # this is a vector 
+plot(y,type="l",main="my first plot :)",xlab = "My x label",ylab = "My y label",col="blue")
+```
+
+```{python}
+import matplotlib.pyplot as plt
+y=[3,4,1,5,2,10]
+plt.plot(y,"b")
+plt.title("my first plot :)")
+plt.xlabel("My x label")
+plt.ylabel("My y label")
+```
+
+
+```{r,fig.height = 8, fig.width = 8}
+n<-50
+height<-matrix(150+runif(n,1,30),n,1)
+weight<-matrix(height/3+runif(n,1,10),n,1)
+par(mfrow=c(3,2))#this option allows to put 6 graphics in 3 rows and 2 columns
+plot(height,weight)
+plot(height,weight,pch = 21, cex=2, col="black", bg="green", lwd=1)
+plot(height,weight,pch = 8, cex=1, col="yellow", lwd=2)
+plot(height,weight,pch = 23, cex=3, col="blue", bg="red", lwd=3)
+plot(y,lwd=4,col="green",type="l")
+plot(y,lwd=2,col="red",type="b")
+```
+
+```{python}
+import numpy as np
+import matplotlib.pyplot as plt
+n=50
+height=150+np.random.uniform(1,30,n)
+weight=height/3+np.random.uniform(1,10,n)
+plt.subplot(3,2,1)
+plt.plot(height,weight,'k.')
+plt.subplot(3,2,2)
+plt.plot(height,weight,'go',linewidth=1)
+plt.subplot(3,2,3)
+plt.plot(height,weight,'y*',linewidth=2)
+plt.subplot(3,2,4)
+plt.plot(height,weight,'rD',linewidth=3)
+plt.subplot(3,2,5)
+plt.plot(y,'g-',linewidth=4)
+plt.subplot(3,2,6)
+plt.plot(y,'r-o',linewidth=2)
+```
+
+
+```{r,fig.height = 3, fig.width = 4,fig.height = 5, fig.width = 8}
+y<-c(3,4,1,5,2,10) # this is a vector 
+bothframe<-data.frame(height,weight)
+par(mfrow=c(1,2))
+barplot(y,main="my first barplot :)",xlab = "My x label",ylab = "My y label",col="blue")
+barplot(table(cut(bothframe$height,5)),co="pink",xlab = "height",ylab = "frequency")
+```
+
+```{python,fig.height = 6, fig.width = 18}
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+y=[3,4,1,5,2,10]
+plt.subplot(1,2,1)
+plt.bar(range(len(y)),y)
+plt.title("my first barplot :)")
+plt.xlabel("My x label")
+plt.ylabel("My y label")
+plt.subplot(1,2,2)
+bothframe=pd.DataFrame({
+  'height':height,
+  'weight':weight
+})
+pd.value_counts(pd.cut(bothframe['height'],5))
+bins=['(151.408, 157.061]','(157.061, 162.685]','(162.685, 168.309]','(168.309, 173.933]','(173.933, 179.557]']
+plt.bar(bins,pd.value_counts(pd.cut(bothframe['height'],5)))
+plt.show()
+```
+
+
+```{r}
+par(mfrow=c(1,2),bg="green")
+hist(height,col="yellow",breaks = 10)
+hist(height,breaks = 30,xlab = "my variable is height",main="Do you like this histogram?",col="red")
+```
+
+```{python,fig.height = 6, fig.width = 8}
+import numpy as np
+import matplotlib.pyplot as plt
+plt.subplot(1,2,1)
+plt.hist(height,bins=10,color='yellow')
+plt.xlabel('height')
+plt.ylabel('frequency')
+plt.subplot(1,2,2)
+plt.hist(height,bins=30,color='red')
+plt.xlabel('height')
+plt.ylabel('frequency')
+plt.show()
+```
+
+
+```{r}
+dati<-matrix(round(runif(10,1,5),0),5,2)
+colnames(dati)<-c("Week 1","Week 2")
+barplot(dati,beside=TRUE,col=rainbow(5))
+```
+
+```{python,fig.height = 6, fig.width = 8}
+import numpy as np
+import matplotlib.pyplot as plt
+dati=np.reshape(np.round(np.random.uniform(1,5,10)),(5,2))
+plt.subplot(1,2,1)
+plt.bar(['Mon','Tue','Thur','Wed','Fri'],dati[:,0])
+plt.subplot(1,2,2)
+plt.bar(['Mon','Tue','Thur','Wed','Fri'],dati[:,1])
+plt.show()
+```
+
+
+```{r,fig.height = 5, fig.width = 8}
+par(mfrow=c(1,2))
+hist(rnorm(500),breaks = 20,
+     xlab = "histo of a normal variable generated",
+     main="Normal distribution",col="green")
+hist(rnorm(50000),breaks = 200,
+     xlab = "histo of a normal variable generated",
+     main="Normal distribution")
+```
+
+```{python,fig.height = 5, fig.width = 8}
+import numpy as np
+import matplotlib.pyplot as plt
+plt.subplot(1,2,1)
+plt.hist(np.random.randn(500),bins=20,color='green')
+plt.title('Normal distribution')
+plt.xlabel('histo of a normal variable generated')
+plt.subplot(1,2,2)
+plt.hist(np.random.randn(50000),bins=2000,color='black')
+plt.title('Normal distribution')
+plt.xlabel('histo of a normal variable generated')
+plt.show()
+```
+
+
+```{r,fig.height = 5, fig.width = 8}
+n<-150
+height1<-matrix(150+runif(n,1,30),n,1)
+height2<-matrix(130+runif(n,1,30),n,1)
+par(mfrow=c(1,2))
+boxplot(cbind(height1,height2),col=c("yellow","green"))
+boxplot(cbind(height1,height2),horizontal=TRUE, col=c("red","blue"),notch=T)
+```
+
+```{python,fig.height = 6, fig.width = 12}
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+n=150
+height1=np.random.uniform(1,30,n)+150
+height2=np.random.uniform(1,30,n)+130
+df=pd.DataFrame({
+  "1":height1,
+  "2":height2
+})
+plt.subplot(1,2,1)
+df.boxplot()
+plt.subplot(1,2,2)
+df.boxplot(vert=False)
+plt.show()
+```
+
+
+```{r,fig.height = 5, fig.width = 8}
+facts = matrix(round(runif(300,1,3),0),300,1)
+myfactor = factor(facts,labels=c("No Wine","Red Wine","White Wine"))
+appreciate<-c();
+for(i in 1:300){
+  if(myfactor[i]=="No Wine"){
+    appreciate[i]<-runif(1,1,4)
+  } else if(myfactor[i]=="Red Wine"){
+      appreciate[i]<-runif(1,3,7)
+  } else if(myfactor[i]=="White Wine"){
+        appreciate[i]<-runif(1,6,10)}
+  }
+age<-c(); for(i in 1:300){
+  if(myfactor[i]=="No Wine"){
+    age[i]<-runif(1,50,60)
+  } else if(myfactor[i]=="Red Wine"){
+      age[i]<-runif(1,30,50)
+  } else if(myfactor[i]=="White Wine"){
+        age[i]<-runif(1,60,80)}
+  }
+df<-data.frame(appreciate,age,myfactor)
+plot(df$age,df$appreciate,col=df$myfactor,pch = 16)
+legend(x = 35, y = 10, legend = levels(df$myfactor), col = c(1:3), pch = 16)
+```
+
+```{python,fig.height = 5, fig.width = 8}
+import numpy as np
+import matplotlib.pyplot as plt
+x=np.random.randint(1,4,300)
+y=np.zeros(300)
+z=np.zeros(300)
+y1=[]
+z1=[]
+y2=[]
+z2=[]
+y3=[]
+z3=[]
+for i in range(0,300):
+  if x[i]==1:
+    y[i]=np.random.uniform(1,4)
+    z[i]=np.random.randint(50,60)
+    y1.append(y[i])
+    z1.append(z[i])
+  if x[i]==2:
+    y[i]=np.random.uniform(3,7)
+    z[i]=np.random.randint(30,50)
+    y2.append(y[i])
+    z2.append(z[i])
+  if x[i]==3:
+    y[i]=np.random.uniform(6,10)
+    z[i]=np.random.randint(60,80)
+    y3.append(y[i])
+    z3.append(z[i])
+area=np.pi*4**2
+plt.title("cheese")
+plt.xlabel("age")
+plt.ylabel("appreciate")
+plt.scatter(z1,y1,s=area,c="k",label='no wine')
+plt.scatter(z2,y2,s=area,c="r",label='red wine')
+plt.scatter(z3,y3,s=area,c="g",label='white wine')
+plt.legend()
+plt.show()
+```
+
+
+```{r,fig.height = 5, fig.width = 8}
+sales <- c(1, 3, 6, 4, 9)
+factorsales<-factor(sales,labels =c("Mon","Tue","Wed","Thu","Fri"))
+pie(sales, main="Daily sales", col=rainbow(length(sales)),
+   labels=c("Mon","Tue","Wed","Thu","Fri"))
+propor<-round(sales/sum(sales),2)
+colors=c("grey5","grey40","grey60", "grey85","grey99")
+pie(sales,labels=paste(round(sales/sum(sales),2)*100,"%",sep=""), main="Daily sales", col = colors)
+legend("topright", legend = levels(factorsales), fill = colors)
+```
+
+```{python,fig.height = 5, fig.width = 8}
+import numpy as np
+import matplotlib.pyplot as plt
+sales=np.array([1, 3, 6, 4, 9])
+plt.subplot(1,2,1)
+plt.pie(sales,labels=['Mon','Tue','Wed','Thu','Fri'],colors=['r','y','b','g','m'])
+plt.title('Daily Sales')
+plt.legend()
+plt.subplot(1,2,2)
+plt.pie(sales,labels=['Mon','Tue','Wed','Thu','Fri'],colors=['darkblue','darkcyan','darkgoldenrod','darkgray','darkgreen'],autopct='%1.2f%%',pctdistance=0.8)
+plt.title('Daily Sales')
+plt.legend()
+plt.show()
+```
+
+
+```{r,fig.height = 5, fig.width = 8}
+myspeech<-"giacomo is my name yes giacomo and you call me giacomo since giacomo is my name"
+vectormyspeech<-unlist(strsplit(myspeech,split= " "))
+plot(table(vectormyspeech),main="These are the words of my speach",
+     ylab="these are the frequencies of my words",xlab = "These are the words")
+pie(table(vectormyspeech))
+```
+
+```{python,fig.height = 5, fig.width = 12}
+import matplotlib.pyplot as plt
+myspeech="giacomo is my name yes giacomo and you call me giacomo since giacomo is my name"
+vectormyspeech=myspeech.split()
+frequency = {}
+for word in vectormyspeech:
+  if word not in frequency:
+    frequency[word] = 1
+  else:
+    frequency[word] += 1
+words=[]
+counts=[]
+for word in frequency.items():
+  words.append(word[0])
+  counts.append(word[1])
+plt.subplot(1,2,1)
+plt.bar(words, counts)
+plt.title('These are the words of my speach')
+plt.subplot(1,2,2)
+plt.pie(counts,labels=words,autopct='%1.2f%%',pctdistance=0.8)
+plt.show()
+```
+
+
+```{r}
+barplot(sort(table(vectormyspeech)),horiz = TRUE,las=2)
+```
+
+```{python,fig.height = 5, fig.width = 12}
+import matplotlib.pyplot as plt
+# sorted items in the dictionary by value
+by_value = sorted(frequency.items(),key = lambda item:item[1],reverse=False)
+words=[]
+counts=[]
+for word in by_value:
+  words.append(word[0])
+  counts.append(word[1])
+plt.barh(words,counts)
+plt.show()
+```
+
+
+```{r}
+a1<-"If there is anyone out there who still doubts that America"
+a2<-"is a place where all things are possible who still wonders"
+a3<-"if the dream of our founders is alive in our time who still questions" 
+a4<-"the power of our democracy tonight is your answer It is the answer" 
+a5<-"told by lines that stretched around schools and churches in numbers" 
+a6<-"this nation has never seen by people who waited three hours and four"
+a7<-"hours many for the first time in their lives because they believed that" 
+a8<-"this time must be different, that their voices could be that difference "
+speech<-paste(a1,a2,a3,a4,a5,a6,a7,a8,sep=" ")
+vectorspeech<-unlist(strsplit(speech,split= " "))
+pie(sort(table(vectorspeech))[(length(table(vectorspeech))-10):length(table(vectorspeech))])
+```
+
+```{python,fig.height = 5, fig.width = 12}
+import matplotlib.pyplot as plt
+a1="If there is anyone out there who still doubts that America"
+a2="is a place where all things are possible who still wonders"
+a3="if the dream of our founders is alive in our time who still questions" 
+a4="the power of our democracy tonight is your answer It is the answer" 
+a5="told by lines that stretched around schools and churches in numbers" 
+a6="this nation has never seen by people who waited three hours and four"
+a7="hours many for the first time in their lives because they believed that" 
+a8="this time must be different, that their voices could be that difference "
+speech=a1+' '+a2+' '+a3+' '+a4+' '+a5+' '+a6+' '+a7+' '+a8
+vectorspeech=speech.split()
+frequ = {}
+for word in vectorspeech:
+  if word not in frequ:
+    frequ[word] = 1
+  else:
+    frequ[word] += 1
+by_v = sorted(frequ.items(),key = lambda item:item[1],reverse=True)
+words=[]
+counts=[]
+for word in by_v:
+  words.append(word[0])
+  counts.append(word[1])
+plt.pie(counts[:10],labels=words[:10])
+plt.show()
+```
+
+
+```{r,fig.height = 5, fig.width = 8}
+# delete some unnecessary words, then show as before
+tobedeleted<-matrix(0,length(vectorspeech),1);
+for(i in 1:length(vectorspeech)){
+  if(vectorspeech[i]=="is"||
+     vectorspeech[i]=="by"|| vectorspeech[i]=="I"||
+     vectorspeech[i]=="a"|| vectorspeech[i]=="if"||
+     vectorspeech[i]=="If"|| vectorspeech[i]=="in"||
+     vectorspeech[i]=="the"|| vectorspeech[i]=="that"||
+     vectorspeech[i]=="of"|| vectorspeech[i]=="our"||
+     vectorspeech[i]=="be"|| vectorspeech[i]=="there"||
+     vectorspeech[i]=="this"|| vectorspeech[i]=="their"||
+     vectorspeech[i]=="and"|| vectorspeech[i]=="they"||
+     vectorspeech[i]=="your"|| vectorspeech[i]=="hours"||
+     vectorspeech[i]=="told"|| vectorspeech[i]=="who")
+{tobedeleted[i]<- -i}}
+vectorspeech<-vectorspeech[c(tobedeleted)]
+pie(sort(table(vectorspeech))[(length(table(vectorspeech))-10):length(table(vectorspeech))])
+```
+
+```{python,fig.height = 5, fig.width = 8}
+import matplotlib.pyplot as plt
+### delete certain words in the dictionary ###
+del frequ['is']
+del frequ['by']
+del frequ['a']
+del frequ['if']
+del frequ['If']
+del frequ['in']
+del frequ['the']
+del frequ['that']
+del frequ['of']
+del frequ['our']
+del frequ['be']
+del frequ['there']
+del frequ['this']
+del frequ['their']
+del frequ['and']
+del frequ['they']
+del frequ['your']
+del frequ['hours']
+del frequ['told']
+del frequ['who']
+### end delete ###
+
+by_v = sorted(frequ.items(),key = lambda item:item[1],reverse=True)
+words=[]
+counts=[]
+for word in by_v:
+  words.append(word[0])
+  counts.append(word[1])
+plt.pie(counts[:10],labels=words[:10])
+plt.show()
+```
+
+
+```{r,fig.height = 10, fig.width = 6}
+par(mar=c(5,10,1,1));
+barplot(sort(table(vectorspeech)),horiz = TRUE,las=2)
+```
+
+```{python,fig.height = 10, fig.width = 8}
+import matplotlib.pyplot as plt
+by_v = sorted(frequ.items(),key = lambda item:item[1],reverse=False)
+words=[]
+counts=[]
+for word in by_v:
+  words.append(word[0])
+  counts.append(word[1])
+plt.barh(words,counts)
+plt.show()
+```
+
+
+```{r}
+z <- ts(matrix(rnorm(300), 100, 3), start = c(1961, 1), frequency = 12)
+par(bg = "green")
+plot(z, plot.type = "single", lty = 1:3, col="blue")
+```
+
+```{python,fig.height = 5, fig.width = 8}
+import numpy as np
+import matplotlib.pyplot as plt
+z=np.reshape((np.random.randn(300)),(100,3))
+plt.plot(z)
+plt.show()
+```
+
+
+```{r}
+z <- ts(matrix(rnorm(300), 100, 3), start = c(1961, 1), frequency = 12)
+par(bg = "green")
+plot(z,col="white",lwd=5)
+```
+
+```{python,fig.height = 6, fig.width = 8}
+import numpy as np
+import matplotlib.pyplot as plt
+z=np.reshape((np.random.randn(300)),(100,3))
+plt.subplot(3,1,1)
+plt.plot(z[:,0])
+plt.subplot(3,1,2)
+plt.plot(z[:,1])
+plt.subplot(3,1,3)
+plt.plot(z[:,2])
+plt.show()
+```
+
+
+
+### Simple linear regression model
+
+
+```{r,fig.height = 4, fig.width = 6}
+#set.seed(2)
+x<-rchisq(40,6)  # Chi-squared distribution with 6 degrees of freedom
+e<-rnorm(40)
+y<-1.3+.8*x+e
+pointsline<-1.3+.8*seq(0:20)
+par(mfrow=c(1,1),bg="yellow")
+plot(x,y, main="What is the relation between x and y?",
+     pch = 21, cex=1, col="black", bg="red", lwd=1)
+lines(pointsline)
+```
+
+```{python,fig.height = 4, fig.width = 6}
+import numpy as np
+import matplotlib.pyplot as plt
+np.random.seed(2)
+x=np.random.chisquare(6,40)
+e=np.random.randn(40)
+y=1.3+.8*x+e
+a=np.linspace(0,20,1000)
+plt.plot(a,1.3+.8*a,color='k')
+plt.scatter(x,y,color='r')
+plt.title('What is the relation between x and y?')
+```
+
+
+```{r}
+n<-200
+#set.seed(6)
+gender<-round(1.1*runif(n),0)
+sex<-factor(gender,labels = c("Female","Male"))
+temperature<-2+seq(0,9.99,.05)
+ef<-.4*rnorm(n)
+em<-.8*rnorm(n)
+appreciation<-c()
+for(i in 1:n){
+  if(gender[i]==0){appreciation[i]<-7-.3*temperature[i]+ef[i]
+  } else (appreciation[i]<-10-.7*temperature[i]+em[i])
+}
+par(mfrow=c(1,2))
+plot(temperature,appreciation)
+plot(temperature,appreciation,col=sex,pch = 16)
+legend(x = 7, y = 9, legend = levels(sex), col = c(1:2), pch = 16)
+```
+
+```{python,fig.height = 4, fig.width = 6}
+import numpy as np
+import matplotlib.pyplot as plt
+n=200
+gender=np.round(1.1*np.random.uniform(0,1,n))
+temperature=2+np.linspace(0,9.95,n)
+ef=.4+np.random.randn(n)
+em=.8+np.random.randn(n)
+appreciation=np.zeros(n)
+tf=[]
+tm=[]
+af=[]
+am=[]
+for i in range(n):
+  if(gender[i]==0):
+    appreciation[i]=7-.3*temperature[i]+ef[i]
+    tf.append(temperature[i])
+    af.append(appreciation[i])
+  else:
+    appreciation[i]=10-.7*temperature[i]+em[i]
+    tm.append(temperature[i])
+    am.append(appreciation[i])
+
+plt.subplot(1,2,1)
+plt.scatter(temperature,appreciation)
+plt.subplot(1,2,2)
+plt.scatter(tm,am,color='r')
+plt.subplot(1,2,2)
+plt.scatter(tf,af,color='k')
+```
+
+
+```{r}
+OurRegression=lm(appreciation~temperature)  # linear model y~x
+summary(lm(appreciation~temperature))
+```
+
+```{python}
+import statsmodels.api as sm
+est=sm.OLS(appreciation,temperature).fit()
+print(est.summary())
+```
+
+
+```{r}
+summary(lm(appreciation[gender==0]~temperature[gender==0]))
+summary(lm(appreciation[gender==1]~temperature[gender==1]))
+```
+
+```{python}
+import statsmodels.api as sm
+est=sm.OLS(af,tf).fit()
+print(est.summary())
+est=sm.OLS(am,tm).fit()
+print(est.summary())
+```
+
+
+```{r}
+n<-200
+set.seed(6)
+gender<-round(1.1*runif(n),0)
+sex<-factor(gender,labels = c("Female","Male"))
+temperature<-2+seq(0,9.99,.05)
+age<-22+rchisq(n,5)
+ef<-.4*rnorm(n)
+em<-.8*rnorm(n)
+appreciation<-c()
+for(i in 1:n){
+  if(gender[i]==0){appreciation[i]<-7-.3*temperature[i]+.1*age[i]+ef[i]
+  } else (appreciation[i]<-8-.7*temperature[i]+.02*age[i]+em[i])
+}
+summary(lm(appreciation~temperature+age))
+```
+
+```{python}
+import numpy as np
+import matplotlib.pyplot as plt
+import statsmodels.api as sm
+n=200
+gender=np.round(1.1*np.random.uniform(0,1,n))
+temperature=2+np.linspace(0,9.95,n)
+age=22+np.random.chisquare(5,n)
+ef=.4+np.random.randn(n)
+em=.8+np.random.randn(n)
+appreciation=np.zeros(n)
+tf=[]
+tm=[]
+af=[]
+am=[]
+for i in range(n):
+  if(gender[i]==0):
+    appreciation[i]=7-.3*temperature[i]+.1*age[i]+ef[i]
+    tf.append(temperature[i])
+    af.append(appreciation[i])
+  else:
+    appreciation[i]=8-.7*temperature[i]+.2*age[i]+em[i]
+    tm.append(temperature[i])
+    am.append(appreciation[i])
+est=sm.OLS(appreciation,temperature+age).fit()
+print(est.summary())
+```
+
+
+
+### Optimization with R
+
+
+```{r}
+set.seed(1)
+n<-100
+x<-runif(n,1,8)
+y<-1*rnorm(n)+.8*x
+plot(x,y)
+```
+
+```{python}
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import optimize
+n=100
+x=np.random.uniform(1,8,n)
+y=1*np.random.randn(n)+.8*x
+plt.scatter(x,y)
+```
+
+
+```{r}
+e<-c()
+myfu1 <- function(beta){e<-y-beta*x; sum(e^2)};
+myrelation<-optim(c(1),myfu1,method = "Brent", lower = 0, upper = 3)
+# c(1), start at beta=1; upper and lower set the range of beta
+myrelation; myrelation[[1]]; myrelation[[2]]
+SumofSquare<-c();for(i in 1:100){SumofSquare[i]<-sum((y-(i/100)*x)^2)};plot(SumofSquare)
+# if I want to get error at every point
+beta<-myrelation[[1]]; e<-y-beta*x; # e
+```
+
+```{python,fig.height = 4, fig.width = 6}
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import optimize
+e=[]
+def myfu1(beta):
+  b=beta[0]
+  e=y-b*x
+  return sum(e**2)
+myrelation=optimize.leastsq(myfu1,[1])
+# myrelation=optimize.minimize(myfu1,[1])
+print(myrelation[0])
+myfu1(myrelation[0])
+SumofSquare=[]
+for i in range(100):
+  SumofSquare.append(sum((y-(i/100)*x)**2))
+plt.scatter(range(100),SumofSquare)
+plt.show()
+beta=myrelation[0]
+e=y-beta*x
+# print(e)
+```
+
+
+```{r}
+e<-c()
+myfu2 <- function(beta){
+  for (i in 1:n) {
+    e[i]<-y[i]-beta*x[i]}
+  sum(e^2)}
+myrelation<-optim(c(1),myfu2,method = "Brent", lower = 0, upper = 3)
+myrelation
+```
+
+```{python,fig.height = 4, fig.width = 6}
+import numpy as np
+from scipy import optimize
+e=np.zeros(n)
+def myfu2(beta):
+  b=beta[0]
+  for i in range(n):
+    e[i]=y[i]-b*x[i]
+  return sum(e**2)
+myrelation=optimize.leastsq(myfu2,[1])
+# myrelation=optimize.minimize(myfu2,[1])
+print(myrelation)
+myfu2(myrelation[0])
+```
+
+
+```{r}
+e<-c()
+myfu <- function(beta){b<-beta[1];e<-y-b*x;  sum(abs(e))};
+myrelation<-optim(c(1),myfu,method = "Brent", lower = 0, upper = 3)
+myrelation
+```
+
+```{python}
+from scipy import optimize
+e=[]
+def myfu(beta):
+  b=beta[0]
+  e=y-b*x
+  return sum(abs(e))
+myrelation=optimize.leastsq(myfu,[1])
+# myrelation=optimize.minimize(myfu,[1])
+print(myrelation)
+myfu(myrelation[0])
+```
+
+
+```{r}
+# Exercise (unidimensional)
+set.seed(1224)
+x<-sin(seq(0.01,1,by=.01));
+b<-runif(1);
+y<--b*x+.03*rnorm(length(x));
+plot(x,y)
+```
+
+```{python,fig.height=5,fig.width=8}
+import numpy as np
+import matplotlib.pyplot as plt
+np.random.seed(1224)
+x=np.sin(np.linspace(.01,1,100))
+b=np.random.uniform(0,1)
+y=-b*x+.03*np.random.randn(len(x))
+plt.scatter(x,y)
+```
+
+
+```{r}
+e<-c()
+myfu1 <- function(beta){b<-beta[1]; e<-y-b*x; sum(e^2)};
+myfu2 <- function(beta){b<-beta[1]; e<-y-b*x; sum(abs(e))};
+myrelation1<-optim(c(1),myfu1,control=list(fnscale=1),method = "Brent", lower = -4, upper = 4)
+myrelation2<-optim(c(1),myfu2,control=list(fnscale=1),method = "Brent", lower = -4, upper = 4)
+myrelation1; myrelation2
+```
+
+```{python}
+import numpy as np
+from scipy import optimize
+e=[]
+def myfu1(beta):
+  b=beta[0]
+  e=y-b*x
+  return sum(e**2)
+def myfu2(beta):
+  b=beta[0]
+  e=y-b*x
+  return sum(abs(e))
+myrelation1=optimize.minimize(myfu1,[1])
+myrelation2=optimize.minimize(myfu2,[1])
+print(myrelation1)
+print(myrelation2)
+```
+
+
+```{r}
+myfun<-function(g){y<- (exp(-.5*(g-4)^2)/sqrt(2*pi));y}
+myrelation<-optim(c(1),myfun,control=list(fnscale=-1),method="Brent",lower=-14,upper =14)
+myrelation
+# exam the result
+x<-seq(0,8,length.out=1000)
+y<- (exp(-.5*(x-4)^2)/sqrt(2*pi))
+plot(x,y)
+```
+
+```{python,fig.height=5,fig.width=8}
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import optimize
+def myfun(g):
+  y=(np.exp(-.5*(g-4)**2)/np.sqrt(2*np.pi))
+  return -y
+myrelation=optimize.minimize(myfun,[1])
+result=-myrelation.fun
+print(myrelation)
+x=np.linspace(0,8,1000)
+y=(np.exp(-.5*(x-4)**2)/np.sqrt(2*np.pi))
+plt.plot(x,y)
+```
+
+
+```{r}
+myfun<-function(myvalues){x<-myvalues[1];y<-myvalues[2];(x-2)^2+(4+y)^2}
+myresults<-optim(c(1,3),myfun)
+myresults
+x<-myresults[[1]][[1]];y<-myresults[[1]][[2]];t<-(x-2)^2+(4+y)^2
+```
+
+```{python}
+from scipy import optimize
+def myfun(par):
+  x=par[0]
+  y=par[1]
+  return (x-2)**2+(4+y)**2
+myresults=optimize.minimize(myfun,[1,3])
+print(myresults)
+x=myresults.x[0]
+y=myresults.x[1]
+t=(x-2)**2+(4+y)**2
+```
+
+
+```{r}
+x<-seq(-5,10,len=50);
+y<-seq(-11,2,len=50);
+f<-function(x,y) {(-2+x)^2+(4+y)^2};
+z<-outer(x,y,f);
+persp(x,y,z,phi=20,theta=60,col="yellow",ticktype="detailed")
+```
+
+```{python,fig.height=6,fig.width=6}
+import numpy as np
+from matplotlib import pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+x=np.linspace(-5,10,50)
+y=np.linspace(-11,2,50)
+X,Y=np.meshgrid(x,y)
+Z=(-2+X)**2+(4+Y)**2
+fig = plt.figure()
+ax = Axes3D(fig)
+# ax = plt.axes(projection='3d')
+ax.plot_surface(X,Y,Z,cmap='rainbow')
+```
+
+
+```{r}
+par(mfrow=c(1,2))
+image(x,y,z)
+contour(x,y,z)
+```
+
+```{python,fig.height=6,fig.width=10}
+import numpy as np
+from matplotlib import pyplot as plt
+x=np.linspace(-5,10,50)
+y=np.linspace(-11,2,50)
+X,Y=np.meshgrid(x,y)
+Z=(-2+X)**2+(4+Y)**2
+# def f(x,y):
+#   return (-2+x)**2+(4+y)**2
+plt.subplot(1,2,1)
+a=plt.contourf(X,Y,Z,10,cmap=plt.cm.hot)
+c=plt.contour(X,Y,Z,10,colors='white')
+# a=plt.contourf(X,Y,f(X,Y),10,cmap=plt.cm.hot)
+# c=plt.contour(X,Y,f(X,Y),10,colors='white')
+plt.clabel(c,inline=True,fontsize=10)
+# plt.colorbar(a)
+plt.subplot(1,2,2)
+c=plt.contour(X,Y,Z,10,colors='black')
+# c=plt.contour(X,Y,f(X,Y),10,colors='black')
+plt.clabel(c,inline=True,fontsize=10)
+plt.show()
+```
+
+
+```{r}
+x<-seq(-5,10,len=50);
+y<-seq(-11,2,len=50);
+f<-function(x,y) {-(-2+x)^2-(4+y)^2};
+z<-outer(x,y,f);persp(x,y,z,phi=20,theta=60,col="yellow",ticktype="detailed")
+```
+
+```{python}
+import numpy as np
+from matplotlib import pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+x=np.linspace(-5,10,50)
+y=np.linspace(-11,2,50)
+X,Y=np.meshgrid(x,y)
+Z=-(-2+X)**2-(4+Y)**2
+fig = plt.figure()
+ax = Axes3D(fig)
+ax.plot_surface(X,Y,Z,cmap='rainbow')
+```
+
+
+```{r}
+myfun<-function(para){x<-para[1];y<-para[2];z<-exp(-.01*((x-1)^2+(y-2)^2-.5*(x-3)*(y-4)));z}
+myresults<-optim(c(2,3),myfun,control=list(fnscale=-1))
+myresults
+
+x<-seq(-5,10,len=50);
+y<-seq(-5,10,len=50);
+f<-function(x,y) {exp(-.01*((x-1)^2+(y-2)^2-.5*(x-3)*(y-4)))};
+z<-outer(x,y,f);
+persp(x,y,z,phi=20,theta=60,col="yellow",ticktype="detailed")  # phi,theta change the angle to show
+
+par(mfrow=c(1,2))
+image(x,y,z)
+contour(x,y,z)
+```
+
+```{python,fig.height=6,fig.width=10}
+import numpy as np
+from matplotlib import pyplot as plt
+from scipy import optimize
+from mpl_toolkits.mplot3d import Axes3D
+def myfun(para):
+  x=para[0]
+  y=para[1]
+  return -np.exp(-.01*((x-1)**2+(y-2)**2-.5*(x-3)*(y-4)))
+myresults=optimize.minimize(myfun,[2,3])
+print(myresults)
+
+x=np.linspace(-5,10,50)
+y=np.linspace(-5,10,50)
+X,Y=np.meshgrid(x,y)
+Z=np.exp(-.01*((X-1)**2+(Y-2)**2-.5*(X-3)*(Y-4)))
+fig = plt.figure()
+ax = Axes3D(fig)
+ax.plot_surface(X,Y,Z,cmap='rainbow')
+
+plt.subplot(1,2,1)
+a=plt.contourf(X,Y,Z,10,cmap=plt.cm.hot)
+c=plt.contour(X,Y,Z,10,colors='white')
+plt.clabel(c,inline=True,fontsize=10)
+plt.subplot(1,2,2)
+c=plt.contour(X,Y,Z,10,colors='black')
+plt.clabel(c,inline=True,fontsize=10)
+plt.show()
+```
+
+
+```{r}
+set.seed(123)
+x<-runif(100,3,10); c<-7; b<-.9
+y<-c+b*x+rnorm(length(x))
+myfun<-function(para){c<-para[1];b<-para[2];sum((y-c-b*x)^2)}
+optim(c(.3,.4),myfun)
+```
+
+```{python}
+import numpy as np
+from scipy import optimize
+np.random.seed(123)
+x=np.random.uniform(3,10,100)
+c=7
+b=.9
+y=c+b*x+np.random.randn(len(x))
+def myfun(para):
+  c=para[0]
+  b=para[1]
+  return sum((y-c-b*x)**2)
+optimize.minimize(myfun,[.3,.4])
+```
+
+
+
+### The Normal distribution
+
+
+The probability density function of normal distribution is:
+$$
+Probability(x)=\frac{1}{\sqrt{(2\pi\sigma^2)}}exp(-\frac{1}{2}\frac{(x-\mu)^2}{\sigma^2}]
+$$
+
+
+```{r}
+Gaussian_fun<-function(x,mu,sigma2){(1/sqrt(2*pi*sigma2))*exp(-.5*((x-mu)^2/sigma2))}
+Gaussian_std<-function(x){(1/sqrt(2*pi))*exp(-.5*(x^2))}
+```
+
+```{python}
+import math
+def Gaussian_fun(x,mu,sigma2):
+  return (1/sqrt(2*pi*sigma2))*exp(-.5*((x-mu)**2/sigma2))
+def Gaussian_std(x):
+  return (1/sqrt(2*pi))*exp(-.5*(x**2))
+```
+
+
+```{r,fig.height = 6, fig.width =5}
+# generate a normal distribution with mean 0.2 and variance 1.5
+x<-seq(-3.8,4.2,len=800);
+mu<-.2
+sigma<-sqrt(1.5)
+pdf<-c();
+cdf<-c();
+for(i in 1:length(x)){
+  pdf[i]<-(1/sqrt(2*pi*sigma^2))*exp(-.5*((x[i]-mu)^2/sigma^2));
+  cdf[i]=round(sum(pdf[1:i])/100,4)};  # cdf is the CUMULATIVE DISTRIBUTION FUNCTION
+par(mfrow=c(2,1),mar=c(2.5,4,2,2), mgp=c(1.5,.5,0))
+plot(x,pdf, xlab="x",main="Probability distribution function")
+plot(x,cdf, xlab="x",main="Cumulative distribution function")
+```
+
+```{python,fig.height = 6, fig.width =5}
+import numpy as np
+import matplotlib.pyplot as plt
+x=np.linspace(-3.8,4.2,800)
+mu=.2
+sigma=np.sqrt(1.5)
+pdf=[]
+cdf=[]
+for i in range(len(x)):
+  pdf.append((1/np.sqrt(2*np.pi*sigma**2))*np.exp(-.5*((x[i]-mu)**2/sigma**2)))
+  cdf.append(np.round(sum(pdf[1:i])/100,4))
+plt.subplot(2,1,1)
+plt.scatter(x,pdf,c='k',marker='.')
+plt.title('Probability distribution function')
+plt.subplot(2,1,2)
+plt.scatter(x,cdf,c='k',marker='.')
+plt.title('Cumulative distribution function')
+```
+
+
+The pdf of the bivariate normal can be written as:
+$$
+p(x,y)=\frac{1}{2\pi |\Sigma|^{\frac{1}{2}}}exp(-0.5\left[\begin{array}{cc}
+ x-\mu_x&y-\mu_y 
+\end{array}\right]\Sigma^{-1}\left[\begin{array}{c}
+ x-\mu_x\\y-\mu_y 
+\end{array}\right])
+$$
+Where $|M|$ is the determinant of a matrix $M$. Here we have $|\Sigma|=\sigma_x^2\sigma_{y}^2-\sigma_{xy}^2$.
+
+
+```{r}
+### The following R code verified if this is true ###
+# Consider the following matrix called A
+A<-matrix(.7,2,2);A[1,1]<-1;A[2,2]<-1.4;A
+# Now performing the previous calculation the inverse of A (defined here as InvA) is:
+InvA<-matrix(1/(A[1,1]*A[2,2]-A[1,2]^2),2,2);InvA[1,1]<-InvA[1,1]*A[2,2];
+InvA[2,2]<-InvA[2,2]*A[1,1];InvA[2,1]<-InvA[1,2]<-InvA[2,1]*-A[1,2]
+InvA
+# Now if we invert the matrix A using the command solve we have:
+solve(A)
+# So we checked that the result is true!
+B<-diag(1,2,2);B[2,1]<- -A[1,2]/A[2,2];C<-diag(1,2,2);
+C[1,1]<-1/(A[1,1]-A[1,2]^2/A[2,2]);C[2,2]<-1/A[2,2];
+B%*%C%*%t(B)
+# Finally we check:
+A%*%InvA
+# Which is the identity matrix confirming the result
+```
+
+```{python}
+import numpy as np
+
+A=0.7*np.ones((2,2))
+A[0,0]=1
+A[1,1]=1.4
+print(A)
+
+InvA=1/(A[0,0]*A[1,1]-A[0,1]**2)*np.ones((2,2))
+InvA[0,0]=InvA[0,0]*A[1,1]
+InvA[1,1]=InvA[1,1]*A[0,0]
+InvA[1,0]=InvA[0,1]=InvA[1,0]*-A[0,1]
+print(InvA)
+
+np.linalg.inv(A)
+
+B=np.identity(2)
+B[1,0]=-A[0,1]/A[1,1]
+C=np.identity(2)
+C[0,0]=1/(A[0,0]-A[0,1]**2/A[1,1])
+C[1,1]=1/A[1,1]
+np.dot(np.dot(B,C),np.transpose(B))
+
+np.round(np.dot(A,InvA),16)
+# np.dot(A,InvA)
+```
+
+
+```{r,fig.height = 5, fig.width = 8}
+mx<-0
+my<-0
+varx<-.5
+vary<-.6
+covxy<- -.3
+Sigma<-matrix(NA,2,2);Sigma[1,1]<-varx;Sigma[2,2]<-vary;
+Sigma[1,2]<-Sigma[2,1]<-covxy;
+x<-seq(-4,4,len=100);
+y<-seq(-4,4,len=100);
+#f<-function(x,y) {(1/(2*pi*det(Sigma)))*
+#exp(-.5*((c(x-mx,y-my))%*%solve(Sigma)%*%c(x-mx,y-my)))}
+f<-function(x,y) (1/(2*pi*det(Sigma)^.5))*
+  exp(-.5*((vary*(x-mx)^2+(y-my)*(-2*(x-mx)*covxy+varx*(y-my)))/(varx*vary-2*covxy)))
+z<-outer(x,y,f);
+persp(x,y,z,phi=30,theta=-10,col="yellow",ticktype="detailed")
+par(mfrow=c(1,2))
+image(x,y,z)
+contour(x,y,z)
+```
+
+```{python,fig.height=6,fig.width=8}
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+mx=0
+my=0
+varx=.5
+vary=.6
+covxy=-.3
+Sigma=np.zeros((2,2))
+Sigma[0,0]=varx
+Sigma[1,1]=vary
+Sigma[0,1]=Sigma[1,0]=covxy
+x=np.linspace(-4,4,100)
+y=np.linspace(-4,4,100)
+def f(x,y):
+  return (1/(2*np.pi*np.linalg.det(Sigma)**.5))*np.exp(-.5*((vary*(x-mx)**2+(y-my)*(-2*(x-mx)*covxy+varx*(y-my)))/(varx*vary-2*covxy)))
+X,Y=np.meshgrid(x,y)
+fig = plt.figure()
+ax = Axes3D(fig)
+ax.plot_surface(X,Y,f(X,Y),cmap='rainbow')
+plt.subplot(1,2,1)
+a=plt.contourf(X,Y,f(X,Y),8,cmap=plt.cm.hot)
+c=plt.contour(X,Y,f(X,Y),8,colors='white')
+plt.clabel(c,inline=True,fontsize=10)
+plt.subplot(1,2,2)
+c=plt.contour(X,Y,f(X,Y),8,colors='black')
+plt.clabel(c,inline=True,fontsize=10)
+plt.show()
+```
+
+
+
+### State-Space models and the Kalman filter
+
+
+```{r}
+### a Kalman filter example ###
+# This code generate a state-space model
+n<-100
+set.seed(1123)
+e<-sqrt(.8)*rnorm(n)
+u<-sqrt(.4)*rnorm(n)
+y<-alpha<-c()
+y[1]=e[1];alpha[1]<-u[1]  # initialize the state-space model
+for(t in 2:n){
+  y[t]<-alpha[t-1]+e[t]
+  alpha[t]<-.9*alpha[t-1]+u[t]
+}
+plot(y,type="p")
+lines(alpha,type="l")
+```
+
+```{python,fig.height=5,fig.width=9}
+import numpy as np
+import matplotlib.pyplot as plt
+n=100
+np.random.seed(1123)
+e=np.sqrt(.8)*np.random.randn(n)
+u=np.sqrt(.4)*np.random.randn(n)
+y=np.zeros(n)
+alpha=np.zeros(n)
+y[0]=e[0]
+alpha[0]=u[0]
+for t in range(1,n):
+  y[t]=alpha[t-1]+e[t]
+  alpha[t]=.9*alpha[t-1]+u[t]
+plt.scatter(range(len(y)),y)
+plt.plot(alpha)
+```
+
+
+```{r}
+n<-100
+sigmae<-.8;sigmau<-.4;w<-.9;z<-1
+# according to parameters, var(a) = .4/(1-.9^2)
+a<-c();p<-c()
+a[1]=0;p[1]<-2.11;
+k<-v<-c()
+#k[1]<-(w*p[1])/(z^2*p[1]+sige)
+for(t in 2:n){
+  k[t]<-(z*w*p[t-1])/(z^2*p[t-1]+sigmae)
+  p[t]<-w^2*p[t-1]-w*z*k[t]*p[t-1]+sigmau
+  v[t]<-y[t]-z*a[t-1]
+  a[t]<-w*a[t-1]+k[t]*v[t]
+}
+matplot(cbind(y,alpha,a),type="l",main=expression(paste(y," ,  ", alpha," , ", a)))
+matplot(cbind(alpha,a),type="l",main=expression(paste(alpha," , ", a)))
+```
+
+```{python,fig.height=10,fig.width=9}
+import numpy as np
+import matplotlib.pyplot as plt
+n=100
+sigmae=.8
+sigmau=.4
+w=.9
+z=1
+a=np.zeros(n)
+p=np.zeros(n)
+a[0]=0
+p[0]=sigmau/(1-w**2)
+k=np.zeros(n)
+v=np.zeros(n)
+for t in range(1,n):
+  k[t]=(z*w*p[t-1])/(z**2*p[t-1]+sigmae)
+  p[t]=w**2*p[t-1]-w*z*k[t]*p[t-1]+sigmau
+  v[t]=y[t]-z*a[t-1]
+  a[t]=w*a[t-1]+k[t]*v[t]
+plt.subplot(2,1,1)
+plt.plot(y,'k',label='y')
+plt.plot(alpha,'r--',label='alpha')
+plt.plot(a,'g--',label='a')
+plt.legend()
+plt.subplot(2,1,2)
+plt.plot(alpha,'k',label='alpha')
+plt.plot(a,'r--',label='a')
+plt.legend()
+plt.show()
+```
+
+
+```{r}
+### an exercise example ###
+z<-1.05;const<-.5;w<-.8;sigmae<-2;sigmau<-.3;
+# generate the model
+set.seed(321)
+n<-100
+e<-sqrt(sigmae)*rnorm(n)
+u<-sqrt(sigmau)*rnorm(n)
+y<-alpha<-c()
+y[1]=e[1];alpha[1]<-u[1]
+for(t in 2:n){
+  y[t]<-z*alpha[t-1]+e[t]
+  alpha[t]<-const+w*alpha[t-1]+u[t]
+}
+plot(y,type="p")
+lines(alpha,type="l")
+# predict the model
+KF<-function(para){
+  sigmae<-para[[1]];sigmau<-para[[2]];
+  z<-para[[3]];w<-para[[4]];
+  const<-para[[5]];y<-para[[6]];
+  a<-c();p<-c()
+  a[1]=y[1];p[1]<-10000  # 10000 stand for infinity
+  if(w<1){a[1]=0;p[1]<-sigmau/(1-w^2)}  # w>1 makes no sense
+  k<-v<-c()
+  for(t in 2:n){
+    k[t]<-(z*w*p[t-1])/(z^2*p[t-1]+sigmae)
+    p[t]<-w^2*p[t-1]-w*z*k[t]*p[t-1]+sigmau
+    v[t]<-y[t]-z*a[t-1]
+    a[t]<-const+w*a[t-1]+k[t]*v[t]
+  }
+  cbind(a,v,k,p)
+}
+matplot(cbind(alpha,KF(list(sigmae,sigmau,z,w,const,y))[,1]),type='l')
+```
+
+```{python}
+import numpy as np
+import matplotlib.pyplot as plt
+# set parameters
+z=1.05
+const=.5
+w=.8
+sigmae=2
+sigmau=.3
+# generate the model
+np.random.seed(321)
+n=100
+e=np.sqrt(.8)*np.random.randn(n)
+u=np.sqrt(.4)*np.random.randn(n)
+y=np.zeros(n)
+alpha=np.zeros(n)
+y[0]=e[0]
+alpha[0]=u[0]
+for t in range(1,n):
+  y[t]=z*alpha[t-1]+e[t]
+  alpha[t]=const+w*alpha[t-1]+u[t]
+plt.subplot(2,1,1)
+plt.scatter(range(len(y)),y)
+plt.plot(alpha)
+# predict the model
+def KF(para):
+  sigmae=para[0]
+  sigmau=para[1]
+  z=para[2]
+  w=para[3]
+  const=para[4]
+  y=para[5]
+  a=np.zeros(n)
+  p=np.zeros(n)
+  a[0]=y[0]
+  p[0]=10000
+  if(w<1):
+    a[0]=0
+    p[0]=sigmau/(1-w**2)
+  k=np.zeros(n)
+  v=np.zeros(n)
+  for t in range(1,n):
+    k[t]=(z*w*p[t-1])/(z**2*p[t-1]+sigmae)
+    p[t]=w**2*p[t-1]-w*z*k[t]*p[t-1]+sigmau
+    v[t]=y[t]-z*a[t-1]
+    a[t]=const+w*a[t-1]+k[t]*v[t]
+  a=a[np.newaxis,:]
+  v=v[np.newaxis,:]
+  k=k[np.newaxis,:]
+  p=p[np.newaxis,:]
+  return np.concatenate((a,v,k,p))
+plt.subplot(2,1,2)
+plt.plot(alpha,'k')
+plt.plot(KF([sigmae,sigmau,z,w,const,y])[0],'r--')
+```
+
+
+```{r}
+StateSpaceGen<-function(param){
+  sigmae<-param[[1]];sigmau=param[[2]];
+  z<-param[[3]];w<-param[[4]];
+  const<-param[[5]];n<-param[[6]];
+  e<-sqrt(sigmae)*rnorm(n)
+  u<-sqrt(sigmau)*rnorm(n)
+  y<-alpha<-c()
+  y[1]=e[1];alpha[1]<-u[1]
+  for(t in 2:n){
+    y[t]<-z*alpha[t-1]+e[t]
+    alpha[t]<-const+w*alpha[t-1]+u[t]
+  }
+  cbind(y,alpha)
+}
+KF<-function(param){
+  sigmae<-param[[1]];sigmau<-param[[2]];
+  z<-param[[3]];w<-param[[4]];
+  const<-param[[5]];y<-param[[6]];
+  n<-length(y);
+  a<-c();p<-c()
+  a[1]=y[1];p[1]<-10000
+  if(w<1){a[1]=0;p[1]<-sigmau/(1-w^2)}
+  k<-v<-c()
+  for(t in 2:n){
+    k[t]<-(z*w*p[t-1])/(z^2*p[t-1]+sigmae)
+    p[t]<-w^2*p[t-1]-w*z*k[t]*p[t-1]+sigmau
+    v[t]<-y[t]-z*a[t-1]
+    a[t]<-const+w*a[t-1]+k[t]*v[t]
+  };
+  cbind(a,v,k,p)
+}
+```
+
+```{python}
+import numpy as np
+def StateSpaceGen(para):
+  sigmae=para[0]
+  sigmau=para[1]
+  z=para[2]
+  w=para[3]
+  const=para[4]
+  n=para[5]
+  e=np.sqrt(sigmae)*np.random.randn(n)
+  u=np.sqrt(sigmau)*np.random.randn(n)
+  y=np.zeros(n)
+  alpha=np.zeros(n)
+  y[0]=e[0]
+  alpha[0]=u[0]
+  for t in range(1,n):
+    y[t]=z*alpha[t-1]+e[t]
+    alpha[t]=const+w*alpha[t-1]+u[t]
+  y=y[np.newaxis,:]
+  alpha=alpha[np.newaxis,:]
+  return np.concatenate((y,alpha))
+def KF(param):
+  sigmae=param[0]
+  sigmau=param[1]
+  z=param[2]
+  w=param[3]
+  const=param[4]
+  y=param[5]
+  n=len(y)
+  a=np.zeros(n)
+  p=np.zeros(n)
+  a[0]=y[0]
+  p[0]=10000
+  if(w<1):
+    a[0]=0
+    p[0]=sigmau/(1-w**2)
+  k=np.zeros(n)
+  v=np.zeros(n)
+  for t in range(1,n):
+    k[t]=(z*w*p[t-1])/(z**2*p[t-1]+sigmae)
+    p[t]=w**2*p[t-1]-w*z*k[t]*p[t-1]+sigmau
+    v[t]=y[t]-z*a[t-1]
+    a[t]=const+w*a[t-1]+k[t]*v[t]
+  a=a[np.newaxis,:]
+  v=v[np.newaxis,:]
+  k=k[np.newaxis,:]
+  p=p[np.newaxis,:]
+  return np.concatenate((a,v,k,p))
+```
+
+
+```{r}
+set.seed(222)
+matplot(cbind(StateSpaceGen(list(.5,.1,1,.8,.3,100)),KF(list(.5,.1,1,.8,.3,StateSpaceGen(list(.5,.1,1,.8,.3,100))[,1]))[,1]),type = "l",main="y, alpha, a",ylab = "y, alpha, a")
+mymat<-cbind(StateSpaceGen(list(.5,.1,1,.8,.3,100)),KF(list(.5,.1,1,.8,.3,StateSpaceGen(list(.5,.1,1,.8,.3,100))[,1]))[,1])
+colnames(mymat)<-c("y","alpha","a")
+legend(x=80,y=0.5,legend = colnames(mymat), col = 1:3, lty = 1:3)
+```
+
+```{python,fig.width=12,fig.height=5}
+import matplotlib.pyplot as plt
+plt.plot(StateSpaceGen([.5,.1,1,.8,.3,100])[0],'k',label='y',linewidth=0.8)
+plt.plot(StateSpaceGen([.5,.1,1,.8,.3,100])[1],'r--',label='alpha',linewidth=0.8)
+plt.plot(KF([.5,.1,1,.8,.3,StateSpaceGen([.5,.1,1,.8,.3,100])[0]])[0],'g--',label='a',linewidth=0.8)
+plt.legend()
+```
+
+
+
+### Likelihood function and model estimation
+
+
+```{r}
+n<-100
+set.seed(3)
+su<-.05
+se<-.5
+e<-sqrt(se)*rnorm(n)
+u<-sqrt(su)*rnorm(n)
+z<-1;wreal<-.86
+const<-.6
+y<-alpha<-c()
+y[1]=const+e[1];alpha[1]<-const+u[1]
+for(t in 2:n){
+  y[t]<-z*alpha[t-1]+e[t]
+  alpha[t]<-const+wreal*alpha[t-1]+u[t]
+}
+########### standard Kalman filter approach###################
+a<-c();p<-c()
+a[1]=0;p[1]<-10;
+k<-v<-c()
+fu<-function(mypa){
+  w<-abs(mypa[1]);se<-abs(mypa[2]);
+  su<-abs(mypa[3]);co<-abs(mypa[4]);
+  z<-1
+  likelihood<-0
+  for(t in 2:n){
+  k[t]<-(z*w*p[t-1])/(z^2*p[t-1]+se)
+  p[t]<-w^2*p[t-1]-w*z*k[t]*p[t-1]+su
+  v[t]<-y[t]-z*a[t-1]
+  a[t]<-co+w*a[t-1]+k[t]*v[t]
+  likelihood<-likelihood+.5*log(2*pi)+.5+.5*log(z^2*p[t-1]+se)+.5*(v[t]^2/(z^2*p[t-1]+se))
+  }
+  likelihood
+}
+results<-optim(c(.85,.5,.3,.3),fu)
+print("The results of the standard KF approach")
+results[[1]]
+print("The true parameters")
+cbind(wreal,se,su,const)
+plot(y,type = "l")
+```
+
+```{python,fig.width=12,fig.height=5}
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import optimize
+n=100
+np.random.seed(3)
+su=.05
+se=.5
+e=np.sqrt(se)*np.random.randn(n)
+u=np.sqrt(su)*np.random.randn(n)
+z=1
+wreal=.86
+const=.6
+y=np.zeros(n)
+alpha=np.zeros(n)
+y[0]=const+e[0]
+alpha[0]=const+u[0]
+for t in range(1,n):
+  y[t]=z*alpha[t-1]+e[t]
+  alpha[t]=const+wreal*alpha[t-1]+u[t]
+########### standard Kalman filter approach###################
+a=np.zeros(n)
+p=np.zeros(n)
+p[0]=10
+k=np.zeros(n)
+v=np.zeros(n)
+def fu(mypa):
+  w=abs(mypa[0])
+  se=abs(mypa[1])
+  su=abs(mypa[2])
+  co=abs(mypa[3])
+  z=1
+  likelihood=0
+  for t in range(1,n):
+    k[t]=(z*w*p[t-1])/(z**2*p[t-1]+se)
+    p[t]=w**2*p[t-1]-w*z*k[t]*p[t-1]+su
+    v[t]=y[t]-z*a[t-1]
+    a[t]=co+w*a[t-1]+k[t]*v[t]
+    likelihood+=.5*np.log(2*np.pi)+.5*np.log(z**2*p[t-1]+se)+.5*(v[t]**2/(z**2*p[t-1]+se))
+  return likelihood
+results=optimize.minimize(fu,[.85,.5,.3,.3])
+print("The results of the standard KF approach")
+print(results.x)
+print("The true parameters")
+print([wreal,se,su,const])
+plt.plot(y,'k',linewidth=0.8)
+```
+
+
+```{r}
+LogLikeSS<-function(param){
+  sigmae<-abs(param[[1]]);sigmau<-abs(param[[2]]);
+  w<-abs(param[[3]]);const<-abs(param[[4]]);
+  z<-1
+  n<-length(y)
+  a<-c();p<-c()
+  a[1]=y[1];p[1]<-10000
+  if(w<1){a[1]=0;p[1]<-sigmau/(1-w^2)}
+  k<-v<-c()
+  likelihood<-0
+  for(t in 2:n){
+    k[t]<-(z*w*p[t-1])/(z^2*p[t-1]+sigmae)
+    p[t]<-w^2*p[t-1]-w*z*k[t]*p[t-1]+sigmau
+    v[t]<-y[t]-z*a[t-1]
+    a[t]<-const+w*a[t-1]+k[t]*v[t]
+    likelihood<-likelihood+.5*log(2*pi)+.5*log(z^2*p[t-1]+sigmae)+.5*(v[t]^2/(z^2*p[t-1]+sigmae))
+  };
+  likelihood
+}
+# set.seed(1)
+sigmae<-.5; sigmau<-.05; z<-1; w<-.86; const<-.6; n<-100
+y<-StateSpaceGen(list(sigmae,sigmau,z,w,const,n))[,1]
+results<-optim(c(.6,.1,.85,.3),LogLikeSS)
+results[[1]]
+```
+
+```{python}
+import numpy as np
+from scipy import optimize
+def LogLikeSS(param):
+  sigmae=param[0]
+  sigmau=param[1]
+  w=param[2]
+  const=param[3]
+  z=1
+  n=len(y)
+  a=np.zeros(n)
+  p=np.zeros(n)
+  a[0]=y[0]
+  p[0]=10000
+  if(w<1):
+    a[0]=0
+    p[0]=sigmau/(1-w**2)
+  k=np.zeros(n)
+  v=np.zeros(n)
+  likelihood=0
+  for t in range(1,n):
+    k[t]=(z*w*p[t-1])/(z**2*p[t-1]+sigmae)
+    p[t]=w**2*p[t-1]-w*z*k[t]*p[t-1]+sigmau
+    v[t]=y[t]-z*a[t-1]
+    a[t]=const+w*a[t-1]+k[t]*v[t]
+    likelihood+=.5*np.log(2*np.pi)+.5*np.log(z**2*p[t-1]+sigmae)+.5*(v[t]**2/(z**2*p[t-1]+sigmae))
+  return likelihood
+np.random.seed(1)
+sigmae=.5
+sigmau=.05
+z=1
+w=.86
+const=.6
+n=100
+y=StateSpaceGen([sigmae,sigmau,z,w,const,n])[0]
+results=optimize.minimize(LogLikeSS,[.6,.1,.85,.3])
+results.x
+```
+
+
+```{r}
+# Concentrated Log-likelihood
+n<-100
+set.seed(61)
+su<-.1
+se<-.4
+qreal<-su/se
+e<-sqrt(se)*rnorm(n)
+u<-sqrt(su)*rnorm(n)
+z<-1;wreal<-.97
+y<-alpha<-c()
+y[1]=e[1];alpha[1]<-u[1]
+for(t in 2:n){
+  y[t]<-z*alpha[t-1]+e[t]
+  alpha[t]<-wreal*alpha[t-1]+u[t]
+}
+########### standard Kalman filter approach###################
+a<-c();p<-c()
+a[1]=0;p[1]<-10;
+k<-v<-c()
+fu<-function(mypa){
+  w<-abs(mypa[1]);q<-abs(mypa[2]);
+  z<-1
+  likelihood<-0
+  sigmae<-0
+  for(t in 2:n){
+    k[t]<-(z*w*p[t-1])/(z^2*p[t-1]+1)
+    p[t]<-w^2*p[t-1]-w*z*k[t]*p[t-1]+q
+    v[t]<-y[t]-z*a[t-1]
+    a[t]<-w*a[t-1]+k[t]*v[t]
+    sigmae<-sigmae+(v[t]^2/(z^2*p[t-1]+1))
+    likelihood<-likelihood+.5*log(2*pi)+.5+.5*log(z^2*p[t-1]+1)
+  }
+  likelihood+.5*n*log(sigmae/n)
+}
+results<-optim(c(.85,.5),fu)
+print("The results of the standard KF approach")
+results[[1]]
+print("The true parameters")
+cbind(wreal,qreal)
+```
+
+```{python}
+import numpy as np
+n=100
+np.random.seed(62)
+su=.1
+se=.4
+qreal=su/se
+e=np.sqrt(se)*np.random.randn(n)
+u=np.sqrt(su)*np.random.randn(n)
+z=1
+wreal=.97
+y=np.zeros(n)
+alpha=np.zeros(n)
+y[0]=e[0]
+alpha[0]=u[0]
+for t in range(1,n):
+  y[t]=z*alpha[t-1]+e[t]
+  alpha[t]=wreal*alpha[t-1]+u[t]
+########### standard Kalman filter approach###################
+a=np.zeros(n)
+p=np.zeros(n)
+p[0]=10
+k=np.zeros(n)
+v=np.zeros(n)
+def fu(mypa):
+  w=abs(mypa[0])
+  q=abs(mypa[1])
+  z=1
+  likelihood=0
+  sigmae=0
+  for t in range(1,n):
+    k[t]=(z*w*p[t-1])/(z**2*p[t-1]+1)
+    p[t]=w**2*p[t-1]-w*z*k[t]*p[t-1]+q
+    v[t]=y[t]-z*a[t-1]
+    a[t]=w*a[t-1]+k[t]*v[t]
+    sigmae+=(v[t]**2/(z**2*p[t-1]+1))
+    likelihood+=.5*np.log(2*np.pi)+.5+.5*np.log(z**2*p[t-1]+1)
+  return likelihood+.5*n*np.log(sigmae/n)
+results=optimize.minimize(fu,[.85,.5])
+print("The results of the standard KF approach")
+print(results.x)
+print("The true parameters")
+print([wreal,qreal])
+```
+
+
+```{r}
+LogLikeSSconc<-function(param){
+  q<-abs(param[[1]]);
+  w<-abs(param[[2]]);
+  const<-abs(param[[3]]);
+  #z<-abs(param[[3]]);
+  z<-1
+  n<-length(y)
+  a<-c();p<-c()
+  a[1]=y[1];p[1]<-10000
+  if(w<1){a[1]=0;p[1]<-sigmau/(1-w^2)}
+  k<-v<-c()
+  likelihood<-sigmae<-0
+  for(t in 2:n){
+    k[t]<-(z*w*p[t-1])/(z^2*p[t-1]+1)
+    p[t]<-w^2*p[t-1]-w*z*k[t]*p[t-1]+q
+    v[t]<-y[t]-z*a[t-1]
+    a[t]<-const+w*a[t-1]+k[t]*v[t]
+    sigmae<-sigmae+(v[t]^2/(z^2*p[t-1]+1))
+    likelihood<-likelihood+.5*log(2*pi)+.5+.5*log(z^2*p[t-1]+1)
+  }
+  likelihood+.5*n*log(sigmae/n)
+}
+# return me the true values of parameters in LogLikeSSconc
+Myparam<-function(para){
+  q<-para[1];w<-para[2];co<-para[3]
+  z<-1
+  n<-length(y)
+  a<-c();p<-c()
+  a[1]=y[1];p[1]<-10000
+  if(w<1){a[1]=0;p[1]<-q/(1-w^2)}
+  k<-v<-c()
+  sigmae<-0
+  for(t in 2:n){
+    k[t]<-(z*w*p[t-1])/(z^2*p[t-1]+1)
+    p[t]<-w^2*p[t-1]-w*z*k[t]*p[t-1]+q
+    v[t]<-y[t]-z*a[t-1]
+    a[t]<-co+w*a[t-1]+k[t]*v[t]
+    sigmae<-sigmae+(v[t]^2/(z^2*p[t-1]+1))
+  }
+  cbind((sigmae/n),q*(sigmae/n),w,co)
+}
+```
+
+```{python}
+import numpy as np
+def LogLikeSSconc(param):
+  q=abs(param[0])
+  w=abs(param[1])
+  const=abs(param[2])
+  z=1
+  n=len(y)
+  a=np.zeros(n)
+  p=np.zeros(n)
+  a[0]=y[0]
+  p[0]=10000
+  if(w<1):
+    a[0]=0
+    p[0]=sigmau/(1-w**2)
+  k=np.zeros(n)
+  v=np.zeros(n)
+  likelihood=0
+  sigmae=0
+  for t in range(1,n):
+    k[t]=(z*w*p[t-1])/(z**2*p[t-1]+1)
+    p[t]=w**2*p[t-1]-w*z*k[t]*p[t-1]+q
+    v[t]=y[t]-z*a[t-1]
+    a[t]=const+w*a[t-1]+k[t]*v[t]
+    sigmae=sigmae+(v[t]**2/(z**2*p[t-1]+1))
+    likelihood+=.5*np.log(2*np.pi)+.5+.5*np.log(z**2*p[t-1]+1)
+  return likelihood+.5*n*np.log(sigmae/n)
+# return me the true values of parameters in LogLikeSSconc
+def Myparam(para):
+  q=para[0]
+  w=para[1]
+  co=para[2]
+  z=1
+  n=len(y)
+  a=np.zeros(n)
+  p=np.zeros(n)
+  a[0]=y[0]
+  p[0]=10000
+  if(w<1):
+    a[0]=0
+    p[0]=q/(1-w**2)
+  k=np.zeros(n)
+  v=np.zeros(n)
+  sigmae=0
+  for t in range(1,n):
+    k[t]=(z*w*p[t-1])/(z**2*p[t-1]+1)
+    p[t]=w**2*p[t-1]-w*z*k[t]*p[t-1]+q
+    v[t]=y[t]-z*a[t-1]
+    a[t]=co+w*a[t-1]+k[t]*v[t]
+    sigmae+=(v[t]**2/(z**2*p[t-1]+1))
+  return [(sigmae/n),q*(sigmae/n),w,co]
+```
+
+
+```{r}
+### compare Loglike, LoglikeConc and true paras ###
+set.seed(1265)
+sigmae<-.1;sigmau<-.05;z<-1;w<-.85;const<-.2;n<-100;
+Data<-StateSpaceGen(list(sigmae,sigmau,z=1,w,const,n))
+matplot(Data,type = "l")
+colnames(Data)<-c("y","alpha")
+legend(x=70,y=0.5,legend = colnames(Data), col = 1:2, lty = 1:2)
+y<-Data[,1]
+para<-list(.7,.2,.8,3)
+paratrue<-list(sigmae,sigmau,w,const)
+results<-optim(para,LogLikeSS)
+resultsConc<-optim(list(.5,.9,.1),LogLikeSSconc)
+
+resultsAll<-as.matrix(rbind(abs(results[[1]]),Myparam(abs(resultsConc[[1]])),unlist(paratrue)))
+colnames(resultsAll)<-c("sigmae","sigmau","w","const")
+rownames(resultsAll)<-c("Loglike","LoglikeConc","true")
+resultsAll
+```
+
+```{python,fig.height=6,fig.width=8}
+### compare Loglike, LoglikeConc and true paras ###
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import optimize
+np.random.seed(1266)
+sigmae=.1
+sigmau=.05
+z=1
+w=.85
+const=.2
+n=100
+Data=StateSpaceGen([sigmae,sigmau,z,w,const,n])
+plt.plot(Data[0],'k',label='y')
+plt.plot(Data[1],'r--',label='alpha')
+plt.legend()
+y=Data[0]
+para=[.2,.02,.8,.3]
+paratrue=[sigmae,sigmau,w,const]
+results=optimize.minimize(LogLikeSS,para)
+Conc=optimize.minimize(LogLikeSSconc,[.5,.9,.1])
+resultsConc=Myparam(abs(Conc.x))
+results=results.x[np.newaxis,:]
+resultsConc=[resultsConc]
+paratrue=[paratrue]
+resultsAll=np.concatenate((results,resultsConc,paratrue))
+resultsAll
+```
+
+
+
+### The Local level model (or simple exponential smoothing)
+
+
+$w=z=1$ and $constant=0$, such that we have: 
+$$\begin{array}{c}y_t=\alpha_{t-1}+e_t\\
+\alpha_{t}= \alpha_{t-1}+u_t \end{array}$$ 
+
+
+```{r}
+# generate the model
+set.seed(153)
+sigmae<-.5;sigmau<-.2;z<-1;
+w<-1; const<-0; n<-100
+Data<-StateSpaceGen(list(sigmae,sigmau,z,w,const,n))
+matplot(Data,type = "l")
+colnames(Data)<-c("y","alpha")
+legend(x=70,y=0.5,legend = colnames(Data), col = 1:2, lty = 1:2)
+```
+
+```{python,fig.width=9,fig.height=6}
+import numpy as np
+import matplotlib.pyplot as plt
+# generate the model
+np.random.seed(156)
+sigmae=.5
+sigmau=.2
+z=1
+w=1
+const=0
+n=100
+Data=StateSpaceGen([sigmae,sigmau,z,w,const,n])
+plt.plot(Data[0],'k',label='y')
+plt.plot(Data[1],'r--',label='alpha')
+plt.legend()
+```
+
+
+```{r}
+# likelihood
+LikeExpSmooth<-function(param){
+  sigmae<-abs(param[[1]]);sigmau<-abs(param[[2]]);
+  z<-w<-1
+  n<-length(y)
+  a<-c();p<-c()
+  const<-0
+  a[1]=y[1];p[1]<-10000
+  if(w<1){a[1]=0;p[1]<-sigmau/(1-w^2)}
+  k<-v<-c()
+  likelihood<-0
+  for(t in 2:n){
+    k[t]<-(z*w*p[t-1])/(z^2*p[t-1]+sigmae)
+    p[t]<-w^2*p[t-1]-w*z*k[t]*p[t-1]+sigmau
+    v[t]<-y[t]-z*a[t-1]
+    a[t]<-const+w*a[t-1]+k[t]*v[t]
+    likelihood<-likelihood+.5*log(2*pi)+.5*log(z^2*p[t-1]+sigmae)+.5*(v[t]^2/(z^2*p[t-1]+sigmae))
+  };
+  likelihood
+}
+# comparison
+y<-Data[,1]
+paratrue<-list(sigmae,sigmau)
+results<-optim(list(.7,.3),LikeExpSmooth)
+cbind(results[[1]],paratrue)
+```
+
+```{python}
+import numpy as np
+from scipy import optimize
+# likelihood
+def LikeExpSmooth(param):
+  sigmae=abs(param[0])
+  sigmau=abs(param[1])
+  w=1
+  z=1
+  const=0
+  n=len(y)
+  a=np.zeros(n)
+  p=np.zeros(n)
+  a[0]=y[0]
+  p[0]=10000
+  if(w<1):
+    a[0]=0
+    p[0]=sigmau/(1-w**2)
+  k=np.zeros(n)
+  v=np.zeros(n)
+  likelihood=0
+  for t in range(1,n):
+    k[t]=(z*w*p[t-1])/(z**2*p[t-1]+sigmae)
+    p[t]=w**2*p[t-1]-w*z*k[t]*p[t-1]+sigmau
+    v[t]=y[t]-z*a[t-1]
+    a[t]=const+w*a[t-1]+k[t]*v[t]
+    likelihood+=.5*np.log(2*np.pi)+.5*np.log(z**2*p[t-1]+sigmae)+.5*(v[t]**2/(z**2*p[t-1]+sigmae))
+  return likelihood
+y=Data[0]
+paratrue=[[sigmae,sigmau]]
+results=optimize.minimize(LikeExpSmooth,[.7,.3])
+results=results.x[np.newaxis,:]
+np.concatenate((results,paratrue))
+```
+
+
+```{r}
+# concentrate likelihood
+LikeExpSmoConc<-function(param){
+  q<-abs(param[[1]]);
+  const<-0
+  z<-w<-1
+  n<-length(y)
+  a<-c();p<-c()
+  a[1]=y[1];p[1]<-10000
+  if(w<1){a[1]=0;p[1]<-sigmau/(1-w^2)}
+  k<-v<-c()
+  likelihood<-sigmae<-0
+  for(t in 2:n){
+    k[t]<-(z*w*p[t-1])/(z^2*p[t-1]+1)
+    p[t]<-w^2*p[t-1]-w*z*k[t]*p[t-1]+q
+    v[t]<-y[t]-z*a[t-1]
+    a[t]<-const+w*a[t-1]+k[t]*v[t]
+    sigmae<-sigmae+(v[t]^2/(z^2*p[t-1]+1))
+    likelihood<-likelihood+.5*log(2*pi)+.5+.5*log(z^2*p[t-1]+1)
+  }
+  likelihood+.5*n*log(sigmae/n)
+}
+# return me the true values of parameters in LikeExpSmoConc
+MyparamExpSmo<-function(para){
+  q<-para[1];w<-1;co<-0
+  z<-1
+  n<-length(y)
+  a<-c();p<-c()
+  a[1]=y[1];p[1]<-10000
+  if(w<1){a[1]=0;p[1]<-q/(1-w^2)}
+  k<-v<-c()
+  sigmae<-0
+  for(t in 2:n){
+    k[t]<-(z*w*p[t-1])/(z^2*p[t-1]+1)
+    p[t]<-w^2*p[t-1]-w*z*k[t]*p[t-1]+q
+    v[t]<-y[t]-z*a[t-1]
+    a[t]<-co+w*a[t-1]+k[t]*v[t]
+    sigmae<-sigmae+(v[t]^2/(z^2*p[t-1]+1))
+  }
+  cbind((sigmae/(n-1)),q*(sigmae/(n-1)),w,co)
+}
+# comparison
+paratrue<-list(sigmae,sigmau)
+results<-optim(list(.7,.3),LikeExpSmooth)
+resultsConc<-optim(list(.5),LikeExpSmoConc,method = "Brent",lower = 0, upper = 1)
+MyparamExpSmo(resultsConc[[1]])
+cbind(results[[1]],MyparamExpSmo(resultsConc[[1]])[,1:2],paratrue)
+```
+
+```{python}
+import numpy as np
+from scipy import optimize
+# concentrate likelihood
+def LikeExpSmoConc(param):
+  q=abs(param[0])
+  const=0
+  w=1
+  z=1
+  n=len(y)
+  a=np.zeros(n)
+  p=np.zeros(n)
+  a[0]=y[0]
+  p[0]=10000
+  if(w<1):
+    a[0]=0
+    p[0]=sigmau/(1-w**2)
+  k=np.zeros(n)
+  v=np.zeros(n)
+  likelihood=0
+  sigmae=0
+  for t in range(1,n):
+    k[t]=(z*w*p[t-1])/(z**2*p[t-1]+1)
+    p[t]=w**2*p[t-1]-w*z*k[t]*p[t-1]+q
+    v[t]=y[t]-z*a[t-1]
+    a[t]=const+w*a[t-1]+k[t]*v[t]
+    sigmae+=(v[t]**2/(z**2*p[t-1]+1))
+    likelihood+=.5*np.log(2*np.pi)+.5+.5*np.log(z**2*p[t-1]+1)
+  return likelihood+.5*n*np.log(sigmae/n)
+# return me the true values of parameters in LikeExpSmoConc
+def MyparamExpSmo(para):
+  q=para[0]
+  co=0
+  w=1
+  z=1
+  n=len(y)
+  a=np.zeros(n)
+  p=np.zeros(n)
+  a[0]=y[0]
+  p[0]=10000
+  if(w<1):
+    a[0]=0
+    p[0]=q/(1-w**2)
+  k=np.zeros(n)
+  v=np.zeros(n)
+  sigmae=0
+  for t in range(1,n):
+    k[t]=(z*w*p[t-1])/(z**2*p[t-1]+1)
+    p[t]=w**2*p[t-1]-w*z*k[t]*p[t-1]+q
+    v[t]=y[t]-z*a[t-1]
+    a[t]=co+w*a[t-1]+k[t]*v[t]
+    sigmae+=(v[t]**2/(z**2*p[t-1]+1))
+  return [(sigmae/(n-1)),q*(sigmae/(n-1)),w,co]
+# comparison
+paratrue=[[sigmae,sigmau]]
+results=optimize.minimize(LikeExpSmooth,[.7,.3])
+Conc=optimize.minimize(LikeExpSmoConc,[.5])
+resultsConc=MyparamExpSmo(Conc.x)
+results=results.x[np.newaxis,:]
+resultsConc=[resultsConc[0:2]]
+resultsAll=np.concatenate((results,resultsConc,paratrue))
+print(resultsAll)
+```
+
+
+
+### Autoregressive model AR(1) with time varying parameter
+
+
+$z = y_{t-1}$ and $\alpha_t = \beta_{t}$ and $const = 0$ and $w=1$
+$$
+y_t=y_{t-1}\beta_{t-1}+e_t\\
+\beta_{t}=\beta_{t-1}+u_t
+$$
+
+
+```{r}
+set.seed(1221)
+trueparam<-c(.5,.001)
+n<-100
+e<-sqrt(trueparam[[1]])*rnorm(n)
+u<-sqrt(trueparam[[2]])*rnorm(n)
+y<-alpha<-c()
+y[1]=e[1];alpha[1]<-.87+u[1]
+for(t in 2:n){
+  z<-y[t-1]
+  y[t]<-z*alpha[t-1]+e[t]
+  alpha[t]<-alpha[t-1]+u[t]
+}
+par(mfrow=c(1,2))
+plot(y,type="l",main="y ")
+plot(alpha,type="l",main="alpha",lty=3)
+
+# library(forecast)
+# arima(y,c(1,0,0))
+
+LikeAR1TV<-function(param){
+  sigmae<-abs(param[[1]]);sigmau<-abs(param[[2]]);
+  w<-1
+  n<-length(y)
+  a<-c();p<-c()
+  const<-0
+  a[1]=y[1];p[1]<-10000
+  k<-v<-c()
+  likelihood<-0
+  for(t in 2:n){
+    z<-y[t-1]
+    k[t]<-(z*w*p[t-1])/(z^2*p[t-1]+sigmae)
+    p[t]<-w^2*p[t-1]-w*z*k[t]*p[t-1]+sigmau
+    v[t]<-y[t]-z*a[t-1]
+    a[t]<-const+w*a[t-1]+k[t]*v[t]
+    likelihood<-likelihood+.5*log(2*pi)+.5*log(z^2*p[t-1]+sigmae)+.5*(v[t]^2/(z^2*p[t-1]+sigmae))
+  };
+  likelihood
+}
+
+results<-optim(list(.3,.001),LikeAR1TV)
+cbind(trueparam,abs(results[[1]]))
+```
+
+```{python,fig.height=6,fig.width=9}
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import optimize
+# from statsmodels.tsa.arima_model import ARIMA
+np.random.seed(1226)
+trueparam=[.5,.001]
+n=100
+e=np.sqrt(trueparam[0])*np.random.randn(n)
+u=np.sqrt(trueparam[1])*np.random.randn(n)
+y=np.zeros(n)
+alpha=np.zeros(n)
+y[0]=e[0]
+alpha[0]=.87+u[0]
+for t in range(1,n):
+  z=y[t-1]
+  y[t]=z*alpha[t-1]+e[t]
+  alpha[t]=alpha[t-1]+u[t]
+plt.subplot(1,2,1)
+plt.plot(y,'k',linewidth=0.8)
+plt.title('y')
+plt.subplot(1,2,2)
+plt.plot(alpha,'k',linewidth=0.8)
+plt.title('alpha')
+plt.show()
+
+# model=ARIMA(y,(1,0,0)).fit()
+# print(model)
+
+def LikeAR1TV(param):
+  sigmae=abs(param[0])
+  sigmau=abs(param[1])
+  w=1
+  const=0
+  n=len(y)
+  a=np.zeros(n)
+  p=np.zeros(n)
+  a[0]=y[0]
+  p[0]=10000
+  k=np.zeros(n)
+  v=np.zeros(n)
+  likelihood=0
+  for t in range(1,n):
+    z=y[t-1]
+    k[t]=(z*w*p[t-1])/(z**2*p[t-1]+sigmae)
+    p[t]=w**2*p[t-1]-w*z*k[t]*p[t-1]+sigmau
+    v[t]=y[t]-z*a[t-1]
+    a[t]=const+w*a[t-1]+k[t]*v[t]
+    likelihood+=.5*np.log(2*np.pi)+.5*np.log(z**2*p[t-1]+sigmae)+.5*(v[t]**2/(z**2*p[t-1]+sigmae))
+  return likelihood
+
+results=optimize.minimize(LikeAR1TV,[.3,.001])
+results=abs(results.x[np.newaxis,:])
+np.concatenate(([trueparam],results))
+```
+
+
+
+### The Local Level with drift: (the Theta method)
+
+
+$w=z=1$ and $c\neq0$
+$$y_t=\alpha_{t-1}+e_t\\
+\alpha_{t}=c+\alpha_{t-1}+u_t$$
+
+
+```{r}
+# generate the model
+set.seed(572)
+sigmae<-.8;sigmau<-.1;z<-1;
+w<-1; 
+const<-.1; n<-100
+Data<-StateSpaceGen(list(sigmae,sigmau,z=1,w,const,n))
+y<-Data[,1]
+matplot(Data,type = "l")
+colnames(Data)<-c("y","alpha")
+legend(x=2,y=8,legend = colnames(Data), col = 1:2, lty = 1:2)
+```
+
+```{python}
+# generate the model
+import numpy as np
+import matplotlib.pyplot as plt
+np.random.seed(572)
+sigmae=.8
+sigmau=.1
+z=1
+w=1
+const=.1
+n=100
+Data=StateSpaceGen([sigmae,sigmau,z,w,const,n])
+y=Data[0]
+plt.plot(Data[0],'k',label='y',linewidth=.8)
+plt.plot(Data[1],'r--',label='alpha',linewidth=.8)
+plt.legend()
+```
+
+
+```{r}
+# likelihood
+LikeTheta<-function(param){
+  sigmae<-abs(param[[1]]);sigmau<-abs(param[[2]]);
+  const<-abs(param[[3]]);
+  z<-w<-1
+  n<-length(y)
+  a<-c();p<-c()
+  a[1]=y[1];p[1]<-10000
+  k<-v<-c()
+  likelihood<-0
+  for(t in 2:n){
+    k[t]<-(z*w*p[t-1])/(z^2*p[t-1]+sigmae)
+    p[t]<-w^2*p[t-1]-w*z*k[t]*p[t-1]+sigmau
+    v[t]<-y[t]-z*a[t-1]
+    a[t]<-const+w*a[t-1]+k[t]*v[t]
+    likelihood<-likelihood+.5*log(2*pi)+.5*log(z^2*p[t-1]+sigmae)+.5*(v[t]^2/(z^2*p[t-1]+sigmae))
+  };
+  likelihood
+}
+```
+
+```{python}
+import numpy as np
+# likelihood
+def LikeTheta(param):
+  sigmae=abs(param[0])
+  sigmau=abs(param[1])
+  const=abs(param[2])
+  w=1
+  z=1
+  n=len(y)
+  a=np.zeros(n)
+  p=np.zeros(n)
+  a[0]=y[0]
+  p[0]=10000
+  k=np.zeros(n)
+  v=np.zeros(n)
+  likelihood=0
+  for t in range(1,n):
+    k[t]=(z*w*p[t-1])/(z**2*p[t-1]+sigmae)
+    p[t]=w**2*p[t-1]-w*z*k[t]*p[t-1]+sigmau
+    v[t]=y[t]-z*a[t-1]
+    a[t]=const+w*a[t-1]+k[t]*v[t]
+    likelihood+=.5*np.log(2*np.pi)+.5*np.log(z**2*p[t-1]+sigmae)+.5*(v[t]**2/(z**2*p[t-1]+sigmae))
+  return likelihood
+```
+
+
+```{r}
+# concentrate likelihood
+LikeThetaConc<-function(param){
+  q<-abs(param[[1]])
+  const<-abs(param[[2]])
+  z<-w<-1
+  n<-length(y)
+  a<-c();p<-c()
+  a[1]=y[1];p[1]<-10000
+  k<-v<-c()
+  likelihood<-sigmae<-v[1]<-0
+  for(t in 2:n){
+    k[t]<-(z*w*p[t-1])/(z^2*p[t-1]+1)
+    p[t]<-w^2*p[t-1]-w*z*k[t]*p[t-1]+q
+    v[t]<-y[t]-z*a[t-1]
+    a[t]<-const+w*a[t-1]+k[t]*v[t]
+    sigmae<-sigmae+(v[t]^2/(z^2*p[t-1]+1))
+    likelihood<-likelihood+.5*log(2*pi)+.5+.5*log(z^2*p[t-1]+1)
+  }
+  likelihood+.5*n*log(sigmae/n)
+}
+
+# return me the true values of parameters in LikeThetaConc
+MyparamTheta<-function(para){
+  q<-para[1];w<-1;co<-para[2]
+  z<-1
+  n<-length(y)
+  a<-c();p<-c()
+  a[1]=y[1];p[1]<-10000
+  #if(w<1){a[1]=0;p[1]<-q/(1-w^2)}
+  k<-v<-c()
+  sigmae<-v[1]<-0
+  for(t in 2:n){
+    k[t]<-(z*w*p[t-1])/(z^2*p[t-1]+1)
+    p[t]<-w^2*p[t-1]-w*z*k[t]*p[t-1]+q
+    v[t]<-y[t]-z*a[t-1]
+    a[t]<-co+w*a[t-1]+k[t]*v[t]
+    sigmae<-sigmae+(v[t]^2/(z^2*p[t-1]+1))
+  }
+  cbind((sigmae/(n-1)),q*(sigmae/(n-1)),w,co)
+}
+
+# comparison
+paratrue<-list(sigmae,sigmau,const)
+results<-optim(list(.7,.3,.2),LikeTheta)
+resultsConc<-optim(list(.5,.2),LikeThetaConc)
+MyparamTheta(resultsConc[[1]])
+res<-cbind(abs(results[[1]]),MyparamTheta(resultsConc[[1]])[,c(1,2,4)],paratrue)
+colnames(res)<-c("standard KF", "Concentrated","TRUE")
+res
+```
+
+```{python}
+import numpy as np
+from scipy import optimize
+# concentrate likelihood
+def LikeThetaConc(param):
+  q=abs(param[0])
+  const=abs(param[1])
+  w=1
+  z=1
+  n=len(y)
+  a=np.zeros(n)
+  p=np.zeros(n)
+  a[0]=y[0]
+  p[0]=10000
+  k=np.zeros(n)
+  v=np.zeros(n)
+  likelihood=0
+  sigmae=0
+  for t in range(1,n):
+    k[t]=(z*w*p[t-1])/(z**2*p[t-1]+1)
+    p[t]=w**2*p[t-1]-w*z*k[t]*p[t-1]+q
+    v[t]=y[t]-z*a[t-1]
+    a[t]=const+w*a[t-1]+k[t]*v[t]
+    sigmae+=(v[t]**2/(z**2*p[t-1]+1))
+    likelihood+=.5*np.log(2*np.pi)+.5+.5*np.log(z**2*p[t-1]+1)
+  return likelihood+.5*n*np.log(sigmae/n)
+
+# return me the true values of parameters in LikeExpSmoConc
+def MyparamTheta(para):
+  q=para[0]
+  co=para[1]
+  w=1
+  z=1
+  n=len(y)
+  a=np.zeros(n)
+  p=np.zeros(n)
+  a[0]=y[0]
+  p[0]=10000
+  k=np.zeros(n)
+  v=np.zeros(n)
+  sigmae=0
+  for t in range(1,n):
+    k[t]=(z*w*p[t-1])/(z**2*p[t-1]+1)
+    p[t]=w**2*p[t-1]-w*z*k[t]*p[t-1]+q
+    v[t]=y[t]-z*a[t-1]
+    a[t]=co+w*a[t-1]+k[t]*v[t]
+    sigmae+=(v[t]**2/(z**2*p[t-1]+1))
+  return [(sigmae/(n-1)),q*(sigmae/(n-1)),w,co]
+
+# comparison
+paratrue=[[sigmae,sigmau,const]]
+results=optimize.minimize(LikeTheta,[.7,.3,.2])
+Conc=optimize.minimize(LikeThetaConc,[.5,.2])
+resultsConc=MyparamTheta(Conc.x)
+results=abs(results.x[np.newaxis,:])
+resultsConc=np.array(resultsConc)[[0,1,3]][np.newaxis,:]
+resultsAll=np.concatenate((results,resultsConc,paratrue))
+print(resultsAll)
+```
+
+
+
+### Single Source of Error approach
+
+
+Consider the following State-Space model:
+
+\begin{equation}
+\label{eq:ssoe}
+\begin{split}
+y_t=z\alpha_{t-1}+e_t\\
+\alpha_{t}=c+w \alpha_{t-1}+\gamma e_t 
+\end{split}
+\end{equation}
+
+This model has only one noise determining both the state-equation and the observations. One important feature with this approach is that we do not need to run all the four KF recursions but only two, that is :
+
+\begin{equation}
+\label{eq:SSOEfilter}
+\begin{split}
+e_t=y_t-z a_{t-1}\\
+a_{t}=c+w a_{t-1}+\gamma e_t 
+\end{split}
+\end{equation}
+
+
+```{r}
+### The exponential smoothing with one source of error ###
+set.seed(213)
+n<-100
+e<-sqrt(.6)*rnorm(n)
+gamma<-.3
+y<-alpha<-c()
+y[1]=e[1];alpha[1]<-e[1]
+for(t in 2:n){
+  y[t]<-alpha[t-1]+e[t]
+  alpha[t]<-alpha[t-1]+gamma*e[t]
+}
+plot(y,type="l",main="y and alpha")
+lines(alpha,type="l",lty=3)
+```
+
+```{python,fig.height=6,fig.width=9}
+### The exponential smoothing with one source of error ###
+import numpy as np
+np.random.seed(213)
+n=100
+e=np.sqrt(.6)*np.random.randn(n)
+gamma=.3
+y=np.zeros(n)
+alpha=np.zeros(n)
+y[0]=e[0]
+alpha[0]=e[0]
+for t in range(1,n):
+  y[t]=alpha[t-1]+e[t]
+  alpha[t]=alpha[t-1]+gamma*e[t]
+plt.plot(y,'k',label='y')
+plt.plot(alpha,'r--',label='alpha')
+plt.legend()
+```
+
+
+```{r}
+# We can now estimate this model with the two recursions
+a<-c()
+a[1]=y[1]
+e<-matrix(0,length(y),1)
+fu<-function(mypa){
+  gamma<-abs(mypa[0]);
+  for(t in 2:n){
+    e[t]<-y[t]-z*a[t-1]
+    a[t]<-a[t-1]+gamma*e[t]
+  }
+  sum(e^2)/n
+}
+results<-optim(c(.2),fu,method = "Brent", lower = 0, upper = 1)
+results[[1]]
+```
+
+```{python}
+import numpy as np
+from scipy import optimize
+a=np.zeros(n)
+a[0]=y[0]
+e=np.zeros(n)
+def fu(para):
+  gamma=abs(para[0])
+  for t in range(1,n):
+    e[t]=y[t]-z*a[t-1]
+    a[t]=a[t-1]+gamma*e[t]
+  return sum(e**2)/n
+results=optimize.minimize(fu,[.2])
+print(results.x)
+```
+
+
+```{r}
+### The Theta method with one source of error ###
+set.seed(5)
+n<-100
+e<-sqrt(.4)*rnorm(n)
+gamma<-.1
+con<-.05
+y<-alpha<-c()
+y[1]=e[1];alpha[1]<-e[1]
+for(t in 2:n){
+  y[t]<-alpha[t-1]+e[t]
+  alpha[t]<-con+alpha[t-1]+gamma*e[t]
+}
+plot(y,type="l",main="y and alpha")
+lines(alpha,type="l",lty=3)
+```
+
+```{python,fig.height=6,fig.width=9}
+### The Theta method with one source of error ###
+import numpy as np
+import matplotlib.pyplot as plt
+np.random.seed(9)
+n=100
+e=np.sqrt(.4)*np.random.randn(n)
+gamma=.1
+con=.05
+y=np.zeros(n)
+alpha=np.zeros(n)
+y[0]=e[0]
+alpha[0]=e[0]
+for t in range(1,n):
+  y[t]=alpha[t-1]+e[t]
+  alpha[t]=con+alpha[t-1]+gamma*e[t]
+plt.plot(y,'k',label='y')
+plt.plot(alpha,'r--',label='alpha')
+plt.legend()
+```
+
+
+```{r}
+# We can now estimate this model with the two recursions
+a<-c()
+a[1]=y[1];
+e<-matrix(0,length(y),1)
+fu<-function(mypa){
+  gamma<-abs(mypa[1]);
+  co<-abs(mypa[2]);
+  for(t in 2:n){
+    e[t]<-y[t]-z*a[t-1]
+    a[t]<-co+a[t-1]+gamma*e[t]
+  }
+  sum(e^2)/n
+}
+results<-optim(c(.2,.1),fu)
+results[[2]]
+results[[1]]
+```
+
+```{python}
+import numpy as np
+from scipy import optimize
+a=np.zeros(n)
+a[0]=y[0]
+e=np.zeros(n)
+def fu(para):
+  gamma=abs(para[0])
+  co=abs(para[1])
+  for t in range(1,n):
+    e[t]=y[t]-z*a[t-1]
+    a[t]=co+a[t-1]+gamma*e[t]
+  return sum(e**2)/n
+results=optimize.minimize(fu,[.2,.1])
+print(abs(results.x))
+```
+
+
+```{r}
+### AR(1) --> ARIMA(1,0,1) in the single source of error and estimation ###
+set.seed(1452)
+n<-100
+e<-sqrt(1.2)*rnorm(n)
+gamma<-.2
+w<-.94
+y<-alpha<-c()
+y[1]=e[1];alpha[1]<-e[1]
+for(t in 2:n){
+  y[t]<-alpha[t-1]+e[t]
+  alpha[t]<-w*alpha[t-1]+gamma*e[t]
+}
+plot(y,type="l",main="y and alpha")
+lines(alpha,type="l",lty=3)
+
+a<-c()
+a[1]=0;
+ee<-matrix(0,length(y),1)
+fu<-function(mypa){
+  gamma<-abs(mypa[1]);
+  w<-abs(mypa[2]);
+  for(t in 2:n){
+    ee[t]<-y[t]-a[t-1]
+    a[t]<-w*a[t-1]+gamma*ee[t]
+    }
+  sum(ee^2)/n
+}
+results<-optim(c(.2,.6),fu)
+results[[1]]
+```
+
+```{python,fig.height=6,fig.width=9}
+### AR(1) --> ARIMA(1,0,1) in the single source of error and estimation ###
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import optimize
+np.random.seed(1452)
+n=100
+e=np.sqrt(1.2)*np.random.randn(n)
+gamma=.2
+w=.94
+y=np.zeros(n)
+alpha=np.zeros(n)
+y[0]=e[0]
+alpha[0]=e[0]
+for t in range(1,n):
+  y[t]=alpha[t-1]+e[t]
+  alpha[t]=w*alpha[t-1]+gamma*e[t]
+plt.plot(y,'k',label='y')
+plt.plot(alpha,'r--',label='alpha')
+plt.legend()
+plt.show()
+
+a=np.zeros(n)
+ee=np.zeros(n)
+def fu(para):
+  gamma=abs(para[0])
+  w=abs(para[1])
+  for t in range(1,n):
+    ee[t]=y[t]-a[t-1]
+    a[t]=w*a[t-1]+gamma*ee[t]
+  return sum(ee**2)/n
+results=optimize.minimize(fu,[.2,.6])
+print(abs(results.x))
+```
+
+
+The following equations shows the damped trend model in the SSOE:
+$$
+y_t=\alpha_{t-1}+\phi\beta_{t-1}+e_t\\
+\alpha_{t}=\alpha_{t-1}+\phi\beta_{t-1}+\gamma e_t\\
+\beta_{t}=\phi\beta_{t-1}+\theta e_t
+$$
+
+```{r}
+### the damped trend model in the single source of error and estimation ###
+set.seed(123)
+n<-100
+e<-sqrt(.6)*rnorm(n)
+gamma<-.6
+theta<-.2
+phi<-.93
+y<-alpha<-beta<-c()
+y[1]=e[1];alpha[1]<-e[1];
+beta[1]<-0
+for(t in 2:n){
+  beta[t]<-phi*beta[t-1]+theta*e[t]
+  alpha[t]<-alpha[t-1]+phi*beta[t-1]+gamma*e[t]
+  y[t]<-alpha[t-1]+phi*beta[t-1]+e[t]
+}
+plot(y,type="l",main="y and alpha")
+lines(alpha,type="l",lty=3)
+plot(beta,type = "l")
+
+a<-b<-c()
+a[1]=y[1];
+b[1]<-0
+ee<-matrix(0,length(y),1)
+fu<-function(mypa){
+  gamma<-abs(mypa[1]);
+  theta<-abs(mypa[2]);
+  phi<-abs(mypa[3]);
+  for(t in 2:n){
+    ee[t]<-y[t]-a[t-1]-phi*b[t-1]
+    a[t]<-a[t-1]+phi*b[t-1]+gamma*ee[t]
+    b[t]<-phi*b[t-1]+theta*ee[t]
+  }
+  sum(ee^2)/n
+}
+results<-optim(c(.2,.1,.8),fu)
+results[[2]]
+results[[1]]
+gamma<-results[[1]][[1]];theta<-results[[1]][[2]];phi<-results[[1]][[3]]
+for(t in 2:n){
+  ee[t]<-y[t]-a[t-1]-phi*b[t-1]
+  a[t]<-a[t-1]+phi*b[t-1]+gamma*ee[t]
+  b[t]<-phi*b[t-1]+theta*ee[t]
+}
+```
+
+```{python,fig.height=6,fig.width=9}
+### the damped trend model in the single source of error and estimation ###
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import optimize
+np.random.seed(128)
+n=100
+e=np.sqrt(.6)*np.random.randn(n)
+gamma=.6
+theta=.2
+phi=.93
+y=np.zeros(n)
+alpha=np.zeros(n)
+beta=np.zeros(n)
+y[0]=e[0]
+alpha[0]=e[0]
+for t in range(1,n):
+  beta[t]=phi*beta[t-1]+theta*e[t]
+  alpha[t]=alpha[t-1]+phi*beta[t-1]+gamma*e[t]
+  y[t]=alpha[t-1]+phi*beta[t-1]+e[t]
+plt.subplot(3,1,1)
+plt.plot(y,'k',label='y')
+plt.plot(alpha,'r--',label='alpha')
+plt.legend()
+plt.subplot(3,1,2)
+plt.plot(beta,'k')
+
+a=np.zeros(n)
+b=np.zeros(n)
+ee=np.zeros(n)
+a[0]=y[0]
+def fu(para):
+  gamma=abs(para[0])
+  theta=abs(para[1])
+  phi=abs(para[2])
+  for t in range(1,n):
+    ee[t]=y[t]-a[t-1]-phi*b[t-1]
+    a[t]=a[t-1]+phi*b[t-1]+gamma*ee[t]
+    b[t]=phi*b[t-1]+theta*ee[t]
+  return sum(ee**2)/n
+results=optimize.minimize(fu,[.2,.1,.8])
+print(abs(results.x))
+gamma=results.x[0]
+theta=results.x[0]
+phi=results.x[0]
+for t in range(1,n):
+  ee[t]=y[t]-a[t-1]-phi*b[t-1]
+  a[t]=a[t-1]+phi*b[t-1]+gamma*ee[t]
+  b[t]=phi*b[t-1]+theta*ee[t]
+e=e[:,np.newaxis]
+ee=ee[:,np.newaxis]
+np.concatenate((e,ee),axis=1)
+plt.subplot(3,1,3)
+plt.plot(e)
+plt.plot(ee)
+plt.show()
+```
+
+
+
+### Seasonality
+
+
+#### Additive seasonality
+
+
+```{r}
+set.seed(1213)
+n<-102
+e<-sqrt(.5)*rnorm(n)
+u<-sqrt(.1)*rnorm(n)
+y<-alpha<-c()
+seasfactor<-c(5,-4,2,-3)
+s<-4
+seasonal<-rep(seasfactor,ceiling(n/s))[1:n]
+y[1]=e[1]+seasonal[1];alpha[1]<-u[1]
+for(t in 2:n){
+  y[t]<-seasonal[t]+alpha[t-1]+e[t]
+  alpha[t]<-alpha[t-1]+u[t]
+}
+plot(y,type="l",main="y and alpha")
+lines(alpha,type="l",lty=3)
+```
+
+```{python,fig.height=5,fig.width=9}
+import numpy as np
+import matplotlib.pyplot as plt
+from math import ceil
+np.random.seed(1213)
+n=102
+e=np.sqrt(.5)*np.random.randn(n)
+u=np.sqrt(.1)*np.random.randn(n)
+y=np.zeros(n)
+alpha=np.zeros(n)
+seasfactor=[5,-4,2,-3]
+s=len(seasfactor)
+seasonal=(seasfactor*ceil(n/s))[:n]
+y[0]=e[0]+seasonal[0]
+alpha[0]=u[0]
+for t in range(1,n):
+  y[t]=seasonal[t]+alpha[t-1]+e[t]
+  alpha[t]=alpha[t-1]+u[t]
+plt.plot(y,'k')
+plt.plot(alpha,'r--')
+```
+
+
+One way to threat this series is to remove the seasonal component by using the so called moving average appraoch. These are the steps:
+1. Take the centered moving average of the series, call it $CMA_t$
+2. Subtract the $CMA$ from the original series $residuals_t=y_t-CMA_t$
+3. Average the elements of $residuals_t$ by season and obtain the seasonal factor
+4. Subtract the element of $y_t$ by the corresponding seasonal factor
+
+
+```{r} 
+y<-c(6,2,1,3,7,3,2,4)
+cma<-matrix(NA,length(y),1)
+cma[3]<-(.5*y[1]+y[2]+y[3]+y[4]+.5*y[5])/4
+cma[4]<-(.5*y[2]+y[3]+y[4]+y[5]+.5*y[6])/4
+cma[5]<-(.5*y[3]+y[4]+y[5]+y[6]+.5*y[7])/4
+cma[6]<-(.5*y[4]+y[5]+y[6]+y[7]+.5*y[8])/4
+residuals=y-cma
+cbind(y,cma,residuals)
+factors<-cbind(mean(na.omit(residuals[c(1,5)])),mean(na.omit(residuals[c(2,6)])),
+               mean(na.omit(residuals[c(3,7)])),mean(na.omit(residuals[c(4,8)])))
+newseries<-y-rep(factors,2)
+matplot(cbind(y,newseries),type="l")
+```
+
+```{python,fig.height=6,fig.width=9}
+import numpy as np
+import pandas as pd
+y=[6,2,1,3,7,3,2,4]
+cma=np.full(len(y), np.nan)
+cma[2]=(.5*y[0]+y[1]+y[2]+y[3]+.5*y[4])/4
+cma[3]=(.5*y[1]+y[2]+y[3]+y[4]+.5*y[5])/4
+cma[4]=(.5*y[2]+y[3]+y[4]+y[5]+.5*y[6])/4
+cma[5]=(.5*y[3]+y[4]+y[5]+y[6]+.5*y[7])/4
+residuals=y-cma
+print(pd.DataFrame({
+  'y':y,
+  'cma':cma,
+  'residuals':residuals
+}))
+factors=[np.nanmean(residuals[[0,4]]),np.nanmean(residuals[[1,5]]),np.nanmean(residuals[[2,6]]),np.nanmean(residuals[[3,7]])]
+newseries=[a-b for a,b in zip(y,factors*2)]
+cbind=pd.DataFrame({
+  'y':y,
+  'newseries':newseries
+})
+cbind.plot()
+```
+
+
+```{r}
+s<-4 # s is my frequency (for example: quarterly=4;monthly=12;weekly=52)
+n<-length(y)
+#This create the weights to be used in the moving average
+w<-rep(1/(2*s),s+1);w[2:s]<-1/s
+#This create the centered moving average vector
+cma<-matrix(NA,length(y),1);
+#This calculate the centered moving averag
+for(g in 1:(length(y)-s)){cma[g+s/2]<-sum(w*y[g:(g+s)])};
+#This is the residuals
+residuals<-y-cma
+#this creates the s factors as we want
+factors<-c();for(seas in 1:s){
+  factors[seas]<-mean(na.omit(residuals[seq(seas,length(y)-s+seas,by=s)]))}
+#This allows to demean the factors variable
+factors<-factors-rep(mean(factors),s)
+#this is the last step: we take out the seasonal component
+newseries<-y-rep(factors,ceiling(n/s))[1:n]
+matplot(cbind(y,newseries),type="l")
+```
+
+```{python}
+import math
+import numpy as np
+import pandas as pd
+s=4
+n=len(y)
+w=[1/(2*s)]*(s+1)
+w[1:-1]=[1/s]*(s-1)
+cma=np.full(len(y), np.nan)
+for g in range(len(y)-s):
+  cma[int(g+s/2)]=sum([a*b for a,b in zip(w,y[g:g+s+1])])
+residuals=y-cma
+factors=[]
+for seas in range(s):
+  factors.append(np.nanmean(residuals[np.arange(seas,len(y)-s+seas+1,s)]))
+factors=[a-b for a,b in zip(factors,[np.mean(factors)]*s)]
+newseries=[a-b for a,b in zip(y,(factors*math.ceil(n/s))[:n])]
+cbind=pd.DataFrame({
+  'y':y,
+  'newseries':newseries
+})
+cbind.plot()
+```
+
+
+```{r}
+set.seed(243)
+n<-87
+e<-sqrt(.3)*rnorm(n)
+u<-sqrt(.1)*rnorm(n)
+y<-alpha<-c()
+seasfactor<-c(5,-4,2,-3)
+s<-4
+seasonal<-rep(seasfactor,ceiling(n/s))[1:n]
+
+y[1]=e[1]+seasonal[1];alpha[1]<-u[1]
+for(t in 2:n){
+  y[t]<-seasonal[t]+alpha[t-1]+e[t]
+  alpha[t]<-alpha[t-1]+u[t]
+}
+
+w<-rep(1/(2*s),s+1);w[2:s]<-1/s
+cma<-matrix(NA,length(y),1);
+for(g in 1:(length(y)-s)){cma[g+s/2]<-sum(w*y[g:(g+s)])};
+residuals<-y-cma
+factors<-c();for(seas in 1:s){
+factors[seas]<-mean(na.omit(residuals[seq(seas,length(y)-s+seas,by=s)]))}
+factors<-factors-rep(mean(factors),s)
+newseries<-y-rep(factors,ceiling(n/s))[1:n]
+matplot(cbind(newseries,alpha+e),type="l",main=" newseries and alpha+e")
+```
+
+```{python}
+import numpy as np
+np.random.seed(243)
+n=87
+e=np.sqrt(.3)*np.random.randn(n)
+u=np.sqrt(.1)*np.random.randn(n)
+y=[]
+alpha=[]
+seasfactor=[5,-4,2,-3]
+s=len(seasfactor)
+seasonal=(seasfactor*math.ceil(n/s))[:n]
+
+y.append(e[0]+seasonal[0])
+alpha.append(u[0])
+for t in range(1,n):
+  y.append(seasonal[t]+alpha[t-1]+e[t])
+  alpha.append(alpha[t-1]+u[t])
+  
+w=[1/(2*s)]*(s+1)
+w[1:-1]=[1/s]*(s-1)
+cma=np.full(len(y), np.nan)
+for g in range(len(y)-s):
+  cma[int(g+s/2)]=sum([a*b for a,b in zip(w,y[g:g+s+1])])
+residuals=y-cma
+factors=[]
+for seas in range(s):
+  factors.append(np.nanmean(residuals[np.arange(seas,len(y)-s+seas+1,s)]))
+factors=[a-b for a,b in zip(factors,[np.mean(factors)]*s)]
+newseries=[a-b for a,b in zip(y,(factors*math.ceil(n/s))[:n])]
+cbind=pd.DataFrame({
+  'alpha+e':alpha+e,
+  'newseries':newseries
+})
+cbind.plot()
+```
+
+
+```{r}
+print(factors)
+print(seasfactor)
+```
+
+```{python}
+print(factors)
+print(seasfactor)
+```
+
+
+#### Multiplicative seasonality
+
+
+```{r}
+set.seed(7)
+n<-103
+e<-sqrt(.5)*rnorm(n)
+u<-sqrt(.4)*rnorm(n)
+y<-alpha<-c()
+seasfactor<-c(1.7,.3,1.9,.1)
+seasonal<-rep(seasfactor,ceiling(n/4))[1:n]
+y[1]=e[1];alpha[1]<-5+u[1]
+for(t in 2:n){
+  y[t]<-seasonal[t]*(alpha[t-1]+e[t])
+  alpha[t]<-alpha[t-1]+u[t]
+}
+plot(y,type="l",main="y and alpha")
+lines(alpha,type="l",lty=3)
+```
+
+```{python}
+import math
+import numpy as np
+import matplotlib.pyplot as plt
+np.random.seed(9)
+n=103
+e=np.sqrt(.5)*np.random.randn(n)
+u=np.sqrt(.4)*np.random.randn(n)
+y=[]
+alpha=[]
+seasfactor=[1.7,.3,1.9,.1]
+seasonal=(seasfactor*math.ceil(n/4))[:n]
+y.append(e[0])
+alpha.append(5+u[0])
+for t in range(1,n):
+  y.append(seasonal[t]*(alpha[t-1]+e[t]))
+  alpha.append(alpha[t-1]+u[t])
+plt.plot(y,'k')
+plt.plot(alpha,'r--')
+plt.legend(['y','alpha'])
+```
+
+
+Here we can remove the seasonal component by using again the moving average appraoch but in a different way. These are the steps:
+1. Take the centered moving average of the series, call it $CMA_t$
+2. Divide the $CMA$ from the original series $residuals_t=\frac{y_t}{CMA_t}$
+3. Average the elements of $residuals_t$ by season and obtain the seasonal factor
+4. Divide the element of $y_t$ by the corresponding seasonal factor
+
+
+```{r}
+s<-4
+n<-length(y)
+w<-rep(1/(2*s),s+1);w[2:s]<-1/s
+cma<-matrix(NA,length(y),1);
+for(g in 1:(length(y)-s)){cma[g+s/2]<-sum(w*y[g:(g+s)])};
+residuals<-y/cma
+sfactors<-c();for(seas in 1:s){
+  sfactors[seas]<-mean(na.omit(residuals[seq(seas,length(y)-s+seas,by=s)]))}
+sfactors<-sfactors*4/sum(sfactors)
+newseries<-y/rep(sfactors,ceiling(n/s))[1:n]
+sfactors
+```
+
+```{python}
+import math
+import numpy as np
+import pandas as pd
+s=4
+n=len(y)
+w=[1/(2*s)]*(s+1)
+w[1:-1]=[1/s]*(s-1)
+cma=np.full(len(y), np.nan)
+for g in range(len(y)-s):
+  cma[int(g+s/2)]=sum([a*b for a,b in zip(w,y[g:g+s+1])])
+residuals=y/cma
+sfactors=[]
+for seas in range(s):
+  sfactors.append(np.nanmean(residuals[np.arange(seas,len(y)-s+seas+1,s)]))
+sfactors=[a*4/sum(sfactors) for a in sfactors]
+
+newseries=[a/b for a,b in zip(y,(sfactors*math.ceil(n/s))[:n])]
+cbind=pd.DataFrame({
+  'y':y,
+  'newseries':newseries
+})
+print(sfactors)
+print(seasfactor)
+```
+
+
+```{r}
+set.seed(7)
+n<-103
+s<-4
+e<-sqrt(.5)*rnorm(n)
+u<-sqrt(.4)*rnorm(n)
+y<-alpha<-c()
+factor<-c(1.7,.3,1.9,.1)
+seasonal<-rep(factor,ceiling(n/s))[1:n]
+y[1]=e[1];alpha[1]<-5+u[1]
+for(t in 2:n){
+  y[t]<-seasonal[t]*(alpha[t-1]+e[t])
+  alpha[t]<-alpha[t-1]+u[t]
+}
+#Below I extract the seasonal component
+w<-rep(1/(2*s),s+1);w[2:s]<-1/s
+cma<-matrix(NA,length(y),1);
+for(g in 1:(length(y)-s)){cma[g+s/2]<-sum(w*y[g:(g+s)])};
+residuals<-y/cma
+sfactors<-c();for(seas in 1:s){
+sfactors[seas]<-mean(na.omit(residuals[seq(seas,length(y)-s+seas,by=s)]))}
+sfactors<-sfactors*4/sum(sfactors)
+newseries<-y/rep(sfactors,ceiling(n/s))[1:n]
+matplot(cbind(newseries,alpha+e),type="l",main="newseries and alpha+e")
+```
+
+```{python}
+import math
+import numpy as np
+import matplotlib.pyplot as plt
+np.random.seed(9)
+n=103
+s=4
+e=np.sqrt(.5)*np.random.randn(n)
+u=np.sqrt(.4)*np.random.randn(n)
+y=[]
+alpha=[]
+seasfactor=[1.7,.3,1.9,.1]
+seasonal=(seasfactor*math.ceil(n/s))[:n]
+y.append(e[0])
+alpha.append(5+u[0])
+for t in range(1,n):
+  y.append(seasonal[t]*(alpha[t-1]+e[t]))
+  alpha.append(alpha[t-1]+u[t])
+
+w=[1/(2*s)]*(s+1)
+w[1:-1]=[1/s]*(s-1)
+cma=np.full(len(y), np.nan)
+for g in range(len(y)-s):
+  cma[int(g+s/2)]=sum([a*b for a,b in zip(w,y[g:g+s+1])])
+residuals=y/cma
+sfactors=[]
+for seas in range(s):
+  sfactors.append(np.nanmean(residuals[np.arange(seas,len(y)-s+seas+1,s)]))
+sfactors=[a*4/sum(sfactors) for a in sfactors]
+newseries=[a/b for a,b in zip(y,(sfactors*math.ceil(n/s))[:n])]
+cbind=pd.DataFrame({
+  'newseries':newseries,
+  'alpha+e':alpha+e
+})
+cbind.plot()
+```
+
+
+```{r}
+print(factor)
+print(sfactors)
+```
+
+```{python}
+print(sfactors)
+print(seasfactor)
+```
